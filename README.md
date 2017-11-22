@@ -35,7 +35,9 @@ bind it to a global key like the following:
 (global-set-key (kbd "C-c e") #'elbank-overview)
 ```
 
-Otherwise just do `M-x elbank-overview RET` to get started.
+Otherwise just do `M-x elbank-overview RET` to get started.  The overview buffer
+lists all bank accounts with their current balance and a link to each account
+statements report.
 
 From the overview buffer, press `r` to create a new report.
 
