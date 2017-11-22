@@ -123,6 +123,13 @@ Here are some example reports:
                :columns '(date label amount)
                :period `(month ,@(last (elbank-transaction-months))))
 ```
+- Daily expenses of the current month
+```elisp
+(elbank-report :sort-by 'date
+               :group-by 'date
+               :columns '(label category amount)
+               :period `(month ,@(last (elbank-transaction-months))))
+```
 
 ## Contributing
 
