@@ -103,6 +103,27 @@ You can customize `elbank-saved-monthly reports` and
 `elbank-saved-yearly-reports` to get a quick list of commonly used reports from
 the overview buffer.
 
+### Example reports
+
+Here are some example reports:
+
+- All transactions with default columns (date, label, category and amount)
+```elisp
+(elbank-report)
+```
+
+- All transactions with raw text
+```elisp
+(elbank-report :columns '(date label raw amount))
+```
+- Monthly income statement by category
+```elisp
+(elbank-report :sort-by 'amount
+               :group-by 'category
+               :columns '(date label amount)
+               :period `(month ,@(last (elbank-transaction-months))))
+```
+
 ## Contributing
 
 Yes, please do! See [CONTRIBUTING][] for guidelines.
