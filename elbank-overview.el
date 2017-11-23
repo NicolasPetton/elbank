@@ -116,6 +116,10 @@
 		 (propertize "\n" 'face '(:underline t)
 			     'display '(space :align-to 999)))))
 
+(defun elbank-overview-account-group (account)
+  "Return the group into which ACCOUNT is classified."
+  (cadr (split-string (map-elt account 'id) "@")))
+
 (defun elbank-overview--insert-accounts ()
   "Insert all accounts informations in the current buffer."
   (seq-do (lambda (group)
@@ -123,9 +127,7 @@
 	    (seq-map #'elbank-overview--insert-account
 	    	     (cdr group))
 	    (insert "\n"))
-	  (seq-group-by (lambda (account)
-			  (cadr (split-string (map-elt account 'id) "@")))
-			(map-elt elbank-data 'accounts))))
+	  (seq-group-by #'elbank-overview-account-group (map-elt elbank-data 'accounts))))
 
 (defun elbank-overview--insert-bank (bankname)
   "Insert BANKNAME into the current buffer as a header."
