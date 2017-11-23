@@ -52,7 +52,33 @@
   "Major mode for Elbank overview.
 
 \\{elbank-overview-mode-map}"
-  (read-only-mode))
+  (read-only-mode)
+  (setq imenu-prev-index-position-function #'elbank-overview--imenu-prev-index-position-function)
+  (setq imenu-extract-index-name-function #'elbank-overview--imenu-extract-index-name-function))
+
+(defun elbank-overview-account-at-point (&optional point)
+  "Return account at POINT, nil if none.
+If POINT is nil, use current point."
+  (get-text-property (point) 'elbank-account))
+
+(defun elbank-overview--imenu-prev-index-position-function ()
+  "Move point to previous account line in current buffer.
+This function is used as a value for
+`imenu-prev-index-position-function'."
+  (ignore-errors
+    (backward-button (if (= (point) (point-max))
+                         2
+                       1))))
+
+(defun elbank-overview--imenu-extract-index-name-function ()
+  "Return imenu name for line at point.
+This function is used as a value for
+`imenu-extract-index-name-function'.  Point should be at the
+beginning of an account line."
+  (let ((account (elbank-overview-account-at-point)))
+    (format "%s@%s"
+            (elbank-overview-account-group account)
+            (map-elt account 'label))))
 
 ;;;###autoload
 (defun elbank-overview ()
@@ -152,6 +178,7 @@
     (dotimes (_ fill-width)
       (insert " "))
     (elbank--insert-amount balance (map-elt account 'currency))
+    (put-text-property (point-at-bol) (point-at-eol) 'elbank-account account)
     (insert "\n")))
 
 (defun elbank-overview--insert-saved-reports ()
