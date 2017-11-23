@@ -52,7 +52,33 @@
   "Major mode for Elbank overview.
 
 \\{elbank-overview-mode-map}"
-  (read-only-mode))
+  (read-only-mode)
+  (setq imenu-prev-index-position-function #'elbank-overview--imenu-prev-index-position-function)
+  (setq imenu-extract-index-name-function #'elbank-overview--imenu-extract-index-name-function))
+
+(defun elbank-overview-account-at-point (&optional point)
+  "Return account at POINT, nil if none.
+If POINT is nil, use current point."
+  (get-text-property (point) 'elbank-account))
+
+(defun elbank-overview--imenu-prev-index-position-function ()
+  "Move point to previous account line in current buffer.
+This function is used as a value for
+`imenu-prev-index-position-function'."
+  (ignore-errors
+    (backward-button (if (= (point) (point-max))
+                         2
+                       1))))
+
+(defun elbank-overview--imenu-extract-index-name-function ()
+  "Return imenu name for line at point.
+This function is used as a value for
+`imenu-extract-index-name-function'.  Point should be at the
+beginning of an account line."
+  (let ((account (elbank-overview-account-at-point)))
+    (format "%s@%s"
+            (elbank-overview-account-group account)
+            (map-elt account 'label))))
 
 ;;;###autoload
 (defun elbank-overview ()
@@ -116,6 +142,10 @@
 		 (propertize "\n" 'face '(:underline t)
 			     'display '(space :align-to 999)))))
 
+(defun elbank-overview-account-group (account)
+  "Return the group into which ACCOUNT is classified."
+  (cadr (split-string (map-elt account 'id) "@")))
+
 (defun elbank-overview--insert-accounts ()
   "Insert all accounts informations in the current buffer."
   (seq-do (lambda (group)
@@ -123,9 +153,7 @@
 	    (seq-map #'elbank-overview--insert-account
 	    	     (cdr group))
 	    (insert "\n"))
-	  (seq-group-by (lambda (account)
-			  (cadr (split-string (map-elt account 'id) "@")))
-			(map-elt elbank-data 'accounts))))
+	  (seq-group-by #'elbank-overview-account-group (map-elt elbank-data 'accounts))))
 
 (defun elbank-overview--insert-bank (bankname)
   "Insert BANKNAME into the current buffer as a header."
@@ -150,6 +178,7 @@
     (dotimes (_ fill-width)
       (insert " "))
     (elbank--insert-amount balance (map-elt account 'currency))
+    (put-text-property (point-at-bol) (point-at-eol) 'elbank-account account)
     (insert "\n")))
 
 (defun elbank-overview--insert-saved-reports ()
