@@ -1,0 +1,10 @@
+image: nicolaspetton/emacs
+
+before_script:
+ - cask install
+ - emacs --version
+
+test:
+  script:
+    - ./run-tests.sh
+  
