@@ -169,7 +169,9 @@ Transactions are grouped by the GROUP-BY column when non-nil.
 Transactions are sorted by the SORT-BY column, or by the first
 column if nil.
 
-When a PERIOD is provided, append a sum row to the report."
+When a PERIOD is provided, append a sum row to the report.
+
+Return the report buffer."
   (interactive)
   (let ((buf (generate-new-buffer "*elbank report*")))
     (pop-to-buffer buf)
@@ -187,7 +189,8 @@ When a PERIOD is provided, append a sum row to the report."
 	  (elbank-report-filter-account)
 	  (elbank-report-filter-period)
 	  (elbank-report-filter-category)))
-    (elbank-report-refresh)))
+    (elbank-report-refresh)
+    buf))
 
 (defun elbank-report-filter-category ()
   "Prompt for a category and update the report buffer."
