@@ -1,4 +1,6 @@
-# Elbank
+# Elbank 
+[![pipeline status](https://gitlab.petton.fr/nico/elbank/badges/master/pipeline.svg)](https://gitlab.petton.fr/nico/elbank/commits/master) 
+[![Emacs](https://img.shields.io/badge/Emacs-25-8e44bd.svg)](https://www.gnu.org/software/emacs/)
 
 ## Summary
 
