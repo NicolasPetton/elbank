@@ -17,6 +17,10 @@
 			     :period `(month ,@(last (elbank-transaction-months)))
 			     (read (format "(%s)" options))))))
 
+(When "^I make a budget report$"
+  (lambda ()
+    (switch-to-buffer (elbank-budget-report))))
+
 (Given "^I have \"\\(.+\\)\"$"
   (lambda (options)
 ))

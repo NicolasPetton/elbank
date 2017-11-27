@@ -31,6 +31,7 @@
 (require 'elbank-common)
 (require 'elbank-boobank)
 (require 'elbank-report)
+(require 'elbank-budget)
 
 (defvar elbank-overview-buffer-name "*elbank overview*"
   "Name of the elbank overview buffer.")
@@ -40,6 +41,7 @@
     (define-key map (kbd "g") #'elbank-overview-update-buffer)
     (define-key map (kbd "u") #'elbank-overview-update-data)
     (define-key map (kbd "r") #'elbank-report)
+    (define-key map (kbd "b") #'elbank-budget-report)
     (define-key map (kbd "n") #'forward-button)
     (define-key map (kbd "p") #'backward-button)
     (define-key map [tab] #'forward-button)
@@ -110,8 +112,8 @@ beginning of an account line."
     (insert "\n\n")
     (elbank-overview--insert-accounts)
     (elbank-overview--insert-hr)
-    (insert "\n")
-    (insert "Saved reports")
+    (insert "\n\n")
+    (insert "Custom reports")
     (put-text-property (point-at-bol) (point)
 		       'face 'elbank-header-face)
     (insert " ")
@@ -123,6 +125,19 @@ beginning of an account line."
 				  (customize-group 'elbank-report))))
     (insert "\n\n")
     (elbank-overview--insert-saved-reports)
+    (insert "\n")
+    (insert "Budget report")
+    (put-text-property (point-at-bol) (point)
+		       'face 'elbank-header-face)
+    (insert "\n- ")
+    (let ((beg (point)))
+      (insert (format "Budget report of %s"
+		      (elbank-format-period
+		       `(month ,(car (last (elbank-transaction-months)))))))
+      (make-text-button beg (point)
+			'follow-link t
+			'action (lambda (&rest _)
+				  (elbank-budget-report))))
     (goto-char (point-min))))
 
 (defun elbank-overview-update-data ()

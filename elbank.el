@@ -67,6 +67,7 @@ the sequence, and its index within the sequence."
 (require 'elbank-overview)
 (require 'elbank-transaction)
 (require 'elbank-report)
+(require 'elbank-budget)
 (require 'elbank-boobank)
 
 (provide 'elbank)

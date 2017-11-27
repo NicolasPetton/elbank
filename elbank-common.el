@@ -141,12 +141,17 @@ CATEGORY is a string of the form \"cat:subcat:subsubcat\"
 representing the path of a category."
   (if category
       (seq-filter (lambda (transaction)
-		    (string-prefix-p (downcase category)
-				     (downcase (or (elbank-transaction-category
-						    transaction)
-						   ""))))
+		    (elbank-transaction-in-category-p transaction category))
 		  transactions)
     transactions))
+
+(defun elbank-transaction-in-category-p (transaction category)
+  "Return non-nil if TRANSACTION belongs to CATEGORY."
+  (string-prefix-p (downcase category)
+		   (downcase (or (elbank-transaction-category
+				  transaction)
+				 ""))))
+
 
 (defun elbank-filter-transactions-period (transactions period)
   "Return the subset of TRANSACTIONS that are within PERIOD.
