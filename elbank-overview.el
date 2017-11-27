@@ -59,7 +59,7 @@
 (defun elbank-overview-account-at-point (&optional point)
   "Return account at POINT, nil if none.
 If POINT is nil, use current point."
-  (get-text-property (point) 'elbank-account))
+  (get-text-property (or point (point)) 'elbank-account))
 
 (defun elbank-overview--imenu-prev-index-position-function ()
   "Move point to previous account line in current buffer.
@@ -75,7 +75,7 @@ This function is used as a value for
 This function is used as a value for
 `imenu-extract-index-name-function'.  Point should be at the
 beginning of an account line."
-  (let ((account (elbank-overview-account-at-point)))
+  (when-let ((account (elbank-overview-account-at-point)))
     (format "%s@%s"
             (elbank-overview-account-group account)
             (map-elt account 'label))))
