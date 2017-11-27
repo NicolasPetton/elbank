@@ -31,15 +31,18 @@
 
 (declare-function elbank-report "elbank-report.el")
 
+;;;###autoload
 (defgroup elbank nil
   "Elbank"
   :prefix "elbank-"
   :group 'tools)
 
+;;;###autoload
 (defcustom elbank-data-file (locate-user-emacs-file "elbank-data.json")
   "Location of the file used to store elbank data."
   :type '(file))
 
+;;;###autoload
 (defcustom elbank-categories nil
   "Alist of categories of transactions.
 

@@ -40,6 +40,7 @@
 \\{elbank-transaction-mode-map}"
   (read-only-mode))
 
+;;;###autoload
 (defun elbank-show-transaction (transaction)
   "Show the details of TRANSACTION in a separate buffer."
   (let ((buf (get-buffer-create "*Elbank transaction*")))

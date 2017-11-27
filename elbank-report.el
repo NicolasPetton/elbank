@@ -31,15 +31,18 @@
 (require 'elbank-common)
 (require 'elbank-transaction)
 
+;;;###autoload
 (defgroup elbank-report nil
   "Elbank report settings"
   :prefix "elbank-report-"
   :group 'elbank)
 
+;;;###autoload
 (defcustom elbank-report-columns '(date label category amount)
   "List of transaction columns to print in reports."
   :type '(repeat (symbol :tag "Key")))
 
+;;;###autoload
 (defcustom elbank-saved-monthly-reports nil
   "Saved report filters for monthly reports.
 
@@ -67,6 +70,7 @@ Available columns:
 			       (symbol :tag "Column"))
 		       (boolean :tag "Reverse sort"))))
 
+;;;###autoload
 (defcustom elbank-saved-yearly-reports nil
   "Saved report filters for yearly reports.
 
