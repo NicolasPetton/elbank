@@ -17,6 +17,10 @@ Elbank is a personal finances reporting tool for Emacs.  It uses
 
 ![Report](screenshots/report-example.png)
 
+#### Budget reports
+
+![Report](screenshots/budget-report.png)
+
 ##### Transaction details
 
 ![Transaction](screenshots/transaction-details.png)
@@ -148,6 +152,17 @@ Here are some example reports:
                :columns '(label category amount)
                :period `(month ,@(last (elbank-transaction-months))))
 ```
+
+## Budgeting
+
+Monthly Budgets are specified with `elbank-budget`, an assocation list of the form:
+
+```elisp
+'(("category1" . amount)
+  ("category2" . amount))
+```
+
+To open a budget report, press `b` from the overview buffer or `M-x elbank-budget-report`.
 
 ## Contributing
 

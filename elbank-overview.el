@@ -31,6 +31,7 @@
 (require 'elbank-common)
 (require 'elbank-boobank)
 (require 'elbank-report)
+(require 'elbank-budget)
 
 (defvar elbank-overview-buffer-name "*elbank overview*"
   "Name of the elbank overview buffer.")
@@ -40,6 +41,7 @@
     (define-key map (kbd "g") #'elbank-overview-update-buffer)
     (define-key map (kbd "u") #'elbank-overview-update-data)
     (define-key map (kbd "r") #'elbank-report)
+    (define-key map (kbd "b") #'elbank-budget-report)
     (define-key map (kbd "n") #'forward-button)
     (define-key map (kbd "p") #'backward-button)
     (define-key map [tab] #'forward-button)
@@ -59,7 +61,7 @@
 (defun elbank-overview-account-at-point (&optional point)
   "Return account at POINT, nil if none.
 If POINT is nil, use current point."
-  (get-text-property (point) 'elbank-account))
+  (get-text-property (or point (point)) 'elbank-account))
 
 (defun elbank-overview--imenu-prev-index-position-function ()
   "Move point to previous account line in current buffer.
@@ -75,7 +77,7 @@ This function is used as a value for
 This function is used as a value for
 `imenu-extract-index-name-function'.  Point should be at the
 beginning of an account line."
-  (let ((account (elbank-overview-account-at-point)))
+  (when-let ((account (elbank-overview-account-at-point)))
     (format "%s@%s"
             (elbank-overview-account-group account)
             (map-elt account 'label))))
@@ -110,8 +112,8 @@ beginning of an account line."
     (insert "\n\n")
     (elbank-overview--insert-accounts)
     (elbank-overview--insert-hr)
-    (insert "\n")
-    (insert "Saved reports")
+    (insert "\n\n")
+    (insert "Custom reports")
     (put-text-property (point-at-bol) (point)
 		       'face 'elbank-header-face)
     (insert " ")
@@ -123,6 +125,19 @@ beginning of an account line."
 				  (customize-group 'elbank-report))))
     (insert "\n\n")
     (elbank-overview--insert-saved-reports)
+    (insert "\n")
+    (insert "Budget report")
+    (put-text-property (point-at-bol) (point)
+		       'face 'elbank-header-face)
+    (insert "\n- ")
+    (let ((beg (point)))
+      (insert (format "Budget report of %s"
+		      (elbank-format-period
+		       `(month ,(car (last (elbank-transaction-months)))))))
+      (make-text-button beg (point)
+			'follow-link t
+			'action (lambda (&rest _)
+				  (elbank-budget-report))))
     (goto-char (point-min))))
 
 (defun elbank-overview-update-data ()

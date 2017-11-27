@@ -31,15 +31,18 @@
 
 (declare-function elbank-report "elbank-report.el")
 
+;;;###autoload
 (defgroup elbank nil
   "Elbank"
   :prefix "elbank-"
   :group 'tools)
 
+;;;###autoload
 (defcustom elbank-data-file (locate-user-emacs-file "elbank-data.json")
   "Location of the file used to store elbank data."
   :type '(file))
 
+;;;###autoload
 (defcustom elbank-categories nil
   "Alist of categories of transactions.
 
@@ -138,12 +141,17 @@ CATEGORY is a string of the form \"cat:subcat:subsubcat\"
 representing the path of a category."
   (if category
       (seq-filter (lambda (transaction)
-		    (string-prefix-p (downcase category)
-				     (downcase (or (elbank-transaction-category
-						    transaction)
-						   ""))))
+		    (elbank-transaction-in-category-p transaction category))
 		  transactions)
     transactions))
+
+(defun elbank-transaction-in-category-p (transaction category)
+  "Return non-nil if TRANSACTION belongs to CATEGORY."
+  (string-prefix-p (downcase category)
+		   (downcase (or (elbank-transaction-category
+				  transaction)
+				 ""))))
+
 
 (defun elbank-filter-transactions-period (transactions period)
   "Return the subset of TRANSACTIONS that are within PERIOD.
@@ -266,6 +274,67 @@ When CURRENCY is non-nil, append it to the inserted text."
   "Kill the current buffer."
   (interactive)
   (quit-window t))
+
+;;;
+;;; Common major-mode for reports
+;;;
+
+(defvar elbank-report-update-hook nil
+  "Hook run when a report update is requested.")
+
+(defvar elbank-report-period nil
+  "Period filter used in a report buffer.")
+(make-variable-buffer-local 'elbank-report-period)
+
+(defvar elbank-base-report-mode-map
+  (let ((map (make-sparse-keymap)))
+    (define-key map (kbd "q") #'elbank-quit)
+    (define-key map (kbd "n") #'forward-button)
+    (define-key map (kbd "p") #'backward-button)
+    (define-key map [tab] #'forward-button)
+    (define-key map [backtab] #'backward-button)
+    (define-key map (kbd "M-n") #'elbank-base-report-forward-period)
+    (define-key map (kbd "M-p") #'elbank-base-report-backward-period)
+    (define-key map (kbd "g") #'elbank-base-report-refresh)
+    map)
+  "Keymap for `elbank-base-report-mode'.")
+
+(define-derived-mode elbank-base-report-mode nil "Base elbank reports"
+  "Base major mode for viewing a report.
+
+\\{elbank-base-report-mode-map}"
+  (setq-local truncate-lines nil)
+  (read-only-mode))
+
+(defun elbank-base-report-refresh ()
+  "Request an update of the current report."
+  (interactive)
+  (run-hooks 'elbank-base-report-refresh-hook))
+
+(defun elbank-base-report-forward-period (&optional n)
+  "Select the next N period and update the current report.
+If there is no period filter, signal an error."
+  (interactive "p")
+  (unless elbank-report-period
+    (user-error "No period filter for the current report"))
+  (let* ((periods (pcase (car elbank-report-period)
+		    (`year (elbank-transaction-years))
+		    (`month (elbank-transaction-months))))
+	 (cur-index (seq-position periods (cadr elbank-report-period)))
+	 (new-index (+ n cur-index))
+	 (period (seq-elt periods new-index)))
+    (if period
+	(progn
+	  (setq elbank-report-period (list (car elbank-report-period)
+					   period))
+	  (elbank-base-report-refresh))
+      (user-error "No more periods"))))
+
+(defun elbank-base-report-backward-period (&optional n)
+  "Select the previous N period and update the current report.
+If there is no period filter, signal an error."
+  (interactive "p")
+  (elbank-base-report-forward-period (- n)))
 
 (provide 'elbank-common)
 ;;; elbank-common.el ends here

@@ -27,10 +27,14 @@
 (require 'map)
 (require 'json)
 
+(require 'elbank-common)
+
+;;;###autoload
 (defgroup elbank-boobank nil
   "Elbank boobank settings."
   :group 'elbank)
 
+;;;###autoload
 (defcustom elbank-boobank-executable "boobank"
   "Boobank executable."
   :type '(file))

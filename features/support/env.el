@@ -78,7 +78,11 @@
 					       "Local store"
 					       "Bakery"))
 			   ("Expenses:Rent" . ("rent"))
-			   ("Income:Salary" . ("company xx")))))
+			   ("Income:Salary" . ("company xx"))))
+
+ (setq real-elbank-budget elbank-budget)
+ (setq elbank-budget '(("Expenses:Food" . 300)
+		       ("Expenses:Rent" . 450))))
 
 (Before
  ;; Before each scenario is run
@@ -92,5 +96,6 @@
  ;; After when everything has been run
  (setq elbank-data real-elbank-data)
  (setq elbank-categories real-elbank-categories)
+ (setq elbank-budget real-elbank-budget)
  (when-let ((buf (get-buffer "*elbank-report*")))
    (kill-buffer buf)))

@@ -31,15 +31,18 @@
 (require 'elbank-common)
 (require 'elbank-transaction)
 
+;;;###autoload
 (defgroup elbank-report nil
   "Elbank report settings"
   :prefix "elbank-report-"
   :group 'elbank)
 
+;;;###autoload
 (defcustom elbank-report-columns '(date label category amount)
   "List of transaction columns to print in reports."
   :type '(repeat (symbol :tag "Key")))
 
+;;;###autoload
 (defcustom elbank-saved-monthly-reports nil
   "Saved report filters for monthly reports.
 
@@ -67,6 +70,7 @@ Available columns:
 			       (symbol :tag "Column"))
 		       (boolean :tag "Reverse sort"))))
 
+;;;###autoload
 (defcustom elbank-saved-yearly-reports nil
   "Saved report filters for yearly reports.
 
@@ -95,30 +99,21 @@ Available columns:
 		       (boolean :tag "Reverse sort"))))
 
 (defvar elbank-report-mode-map
-  (let ((map (make-sparse-keymap)))
-    (define-key map (kbd "q") #'elbank-quit)
+  (let ((map (copy-keymap elbank-base-report-mode-map)))
     (define-key map (kbd "f c") #'elbank-report-filter-category)
     (define-key map (kbd "f a") #'elbank-report-filter-account)
     (define-key map (kbd "f p") #'elbank-report-filter-period)
     (define-key map (kbd "G") #'elbank-report-group-by)
     (define-key map (kbd "S") #'elbank-report-sort-by)
     (define-key map (kbd "s") #'elbank-report-sort-reverse)
-    (define-key map (kbd "n") #'forward-button)
-    (define-key map (kbd "p") #'backward-button)
-    (define-key map [tab] #'forward-button)
-    (define-key map [backtab] #'backward-button)
-    (define-key map (kbd "M-n") #'elbank-report-forward-period)
-    (define-key map (kbd "M-p") #'elbank-report-backward-period)
-    (define-key map (kbd "g") #'elbank-report-refresh)
     map)
   "Keymap for `elbank-report-mode'.")
 
-(define-derived-mode elbank-report-mode nil "Elbank Report"
+(define-derived-mode elbank-report-mode elbank-base-report-mode "Elbank Report"
   "Major mode for viewing a report.
 
 \\{elbank-report-mode-map}"
-  (setq-local truncate-lines nil)
-  (read-only-mode))
+  (add-hook 'elbank-base-report-refresh-hook 'elbank-report-refresh nil t))
 
 (defvar elbank-report-amount-columns '(amount)
   "List of columns for which values are numbers.")
@@ -143,10 +138,6 @@ Available columns:
 (defvar elbank-report-account-id nil
   "Account filter used in a report buffer.")
 (make-variable-buffer-local 'elbank-report-account-id)
-
-(defvar elbank-report-period nil
-  "Period filter used in a report buffer.")
-(make-variable-buffer-local 'elbank-report-period)
 
 (defvar elbank-report-category nil
   "Category filter used in a report buffer.")
@@ -278,35 +269,9 @@ Return the report buffer."
 	      (not elbank-report-sort-reversed))
   (elbank-report-refresh))
 
-(defun elbank-report-forward-period (&optional n)
-  "Select the next N period and update the current report.
-If there is no period filter, signal an error."
-  (interactive "p")
-  (unless elbank-report-period
-    (user-error "No period filter for the current report"))
-  (let* ((periods (pcase (car elbank-report-period)
-		    (`year (elbank-transaction-years))
-		    (`month (elbank-transaction-months))))
-	 (cur-index (seq-position periods (cadr elbank-report-period)))
-	 (new-index (+ n cur-index))
-	 (period (seq-elt periods new-index)))
-    (if period
-	(progn
-	  (setq elbank-report-period (list (car elbank-report-period)
-					   period))
-	  (elbank-report-refresh))
-      (user-error "No more periods"))))
-
-(defun elbank-report-backward-period (&optional n)
-  "Select the previous N period and update the current report.
-If there is no period filter, signal an error."
-  (interactive "p")
-  (elbank-report-forward-period (- n)))
-
 (defun elbank-report-refresh ()
   "Update the report in the current buffer.
 When `elbank-report-inhibit-update' is non-nil, do not update."
-  (interactive)
   (unless elbank-report-inhibit-update
     (let ((inhibit-read-only t)
 	  (transactions (elbank-report--with-categories
