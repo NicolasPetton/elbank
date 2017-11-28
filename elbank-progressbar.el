@@ -61,10 +61,10 @@ If PERCENT is greater than 100, fill the progressbar in red."
 		     (- width (- (current-column) col))))
       (insert " "))
     (when (not (zerop percent))
-     (put-text-property beg (point)
-			'face (if (> percent 100)
-				  'elbank-progressbar-overflow-face
-				'elbank-progressbar-fill-face)))
+      (put-text-property beg (point)
+			 'face (if (> percent 100)
+				   'elbank-progressbar-overflow-face
+				 'elbank-progressbar-fill-face)))
     (dotimes (_ (- width (- (current-column) col)))
       (insert " "))
     (let ((box (make-overlay beg (point))))
