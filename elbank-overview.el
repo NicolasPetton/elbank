@@ -64,23 +64,18 @@ If POINT is nil, use current point."
   (get-text-property (or point (point)) 'elbank-account))
 
 (defun elbank-overview--imenu-prev-index-position-function ()
-  "Move point to previous account line in current buffer.
+  "Move point to previous button in current buffer.
 This function is used as a value for
 `imenu-prev-index-position-function'."
-  (ignore-errors
-    (backward-button (if (= (point) (point-max))
-                         2
-                       1))))
+  (ignore-errors (backward-button 1)))
 
 (defun elbank-overview--imenu-extract-index-name-function ()
   "Return imenu name for line at point.
 This function is used as a value for
 `imenu-extract-index-name-function'.  Point should be at the
-beginning of an account line."
-  (when-let ((account (elbank-overview-account-at-point)))
-    (format "%s@%s"
-            (elbank-overview-account-group account)
-            (map-elt account 'label))))
+beginning of an account line.
+If nothing important is at point, return nil."
+  (get-text-property (point) 'imenu-name))
 
 ;;;###autoload
 (defun elbank-overview ()
@@ -130,14 +125,16 @@ beginning of an account line."
     (put-text-property (point-at-bol) (point)
 		       'face 'elbank-header-face)
     (insert "\n- ")
-    (let ((beg (point)))
-      (insert (format "Budget report of %s"
-		      (elbank-format-period
-		       `(month ,(car (last (elbank-transaction-months)))))))
+    (let ((beg (point))
+          (name (format "Budget report of %s"
+		        (elbank-format-period
+		         `(month ,(car (last (elbank-transaction-months))))))))
+      (insert name)
       (make-text-button beg (point)
 			'follow-link t
 			'action (lambda (&rest _)
-				  (elbank-budget-report))))
+				  (elbank-budget-report)))
+      (put-text-property (point-at-bol) (point-at-eol) 'imenu-name name))
     (insert "\n")
     (goto-char (point-min))))
 
@@ -195,6 +192,9 @@ beginning of an account line."
       (insert " "))
     (elbank--insert-amount balance (map-elt account 'currency))
     (put-text-property (point-at-bol) (point-at-eol) 'elbank-account account)
+    (put-text-property (point-at-bol) (point-at-eol) 'imenu-name (format "%s@%s"
+                                                                         (elbank-overview-account-group account)
+                                                                         (map-elt account 'label)))
     (insert "\n")))
 
 (defun elbank-overview--insert-saved-reports ()
