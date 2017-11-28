@@ -5,6 +5,7 @@
 (development
  (depends-on "ecukes")
  (depends-on "espuds")
+ (depends-on "buttercup")
  (depends-on "flycheck")
  (depends-on "flycheck-cask")
  (depends-on "f")

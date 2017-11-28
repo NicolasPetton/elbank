@@ -110,10 +110,16 @@ OLD and NEW are lists of transactions for the same account."
 
 (defun elbank--new-transactions (old new)
   "Return all transactions not present in OLD bu present in NEW."
-  (seq-filter (lambda (trans)
-		(> (seq-count (lambda (elt) (equal elt trans)) new)
-		   (seq-count (lambda (elt) (equal elt trans)) old)))
-	      new))
+  (apply #'seq-concatenate 'list
+	 (seq-map (lambda (trans)
+		    (let ((n (- (seq-count (lambda (elt) (equal elt trans)) new)
+				(seq-count (lambda (elt) (equal elt trans)) old))))
+		      (when (> n 0)
+			(let ((result))
+			  (dotimes (_ n)
+			    (setq result (cons trans result)))
+			  result))))
+		  (seq-uniq new))))
 
 (defun elbank--find-boobank-executable ()
   "Return the boobank executable.
