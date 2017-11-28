@@ -138,6 +138,7 @@ beginning of an account line."
 			'follow-link t
 			'action (lambda (&rest _)
 				  (elbank-budget-report))))
+    (insert "\n")
     (goto-char (point-min))))
 
 (defun elbank-overview-update-data ()
