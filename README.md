@@ -29,12 +29,17 @@ Elbank is a personal finances reporting tool for Emacs.  It uses
 
 You will need Emacs 25+.
 
-- [Install Weboob](http://weboob.org/install) and configure Boobank to fetch
-  your transactions;
+- [Install Weboob](http://weboob.org/install) and run `boobank` configure your
+  bank accounts;
   
 - Install Elbank (not in Melpa yet);
 
 - Run `M-x elbank-overview`.
+
+Note: Make sure to enter your username and password (or an automated script)
+during the `boobank` setup, so that `boobank` can retrieve transactions without
+asking for them.  This is currently required as Elbank will not interactively
+ask for usernames or passwords.
 
 ## Usage
 
