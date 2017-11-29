@@ -41,6 +41,16 @@ during the `boobank` setup, so that `boobank` can retrieve transactions without
 asking for them.  This is currently required as Elbank will not interactively
 ask for usernames or passwords.
 
+### Weboob and passwords
+
+If you do not want to store your passwords in Weboob, it is also possible to use
+a password manager like [pass](https://www.passwordstore.org/). During the setup
+of boobank, you can set the password to run an external command like:
+
+```
+pass bank_website
+```
+
 ## Usage
 
 ### Data file
