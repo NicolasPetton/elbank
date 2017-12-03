@@ -332,7 +332,7 @@ Lookup and a `category' to each item of TRANSACTIONS."
 (defun elbank-report--update-column-widths (transactions)
   "Locally set report columns widths needed to print TRANSACTIONS."
   (setq elbank-report-column-widths
-	(seq-map-indexed
+	(elbank-seq-map-indexed
 	 (lambda (col index)
 	   (let ((row-max-width
 		  (seq-reduce (lambda (acc trans)
@@ -414,7 +414,7 @@ When PROPERTIZE-AMOUNTS is non-nil, insert amounts using
 `elbank--propertize-amount'.  SPACER is used for padding if
 non-nil."
   (let ((spacer (or spacer " ")))
-    (seq-map-indexed
+    (elbank-seq-map-indexed
      (lambda (col index)
        (let* ((amount (seq-contains elbank-report-amount-columns col))
 	      (raw-item (or (seq-elt row index) ""))
