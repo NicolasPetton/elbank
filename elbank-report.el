@@ -30,6 +30,7 @@
 
 (require 'elbank-common)
 (require 'elbank-transaction)
+(require 'elbank-compat)
 
 ;;;###autoload
 (defgroup elbank-report nil

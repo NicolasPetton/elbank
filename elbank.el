@@ -35,30 +35,8 @@
 ;;
 ;;   '(("category1" . ("regexp1" "regexp2"))
 ;;     (("category2" . ("regexp")))
-;;
-;; TODO:
-;; - Add unit tests
-;; - Implement budgeting
 
 ;;; Code:
-
-
-;; HACK: In Emacs 25.1, an older version of seq.el is provided, which can be
-;; loaded before indium or even package.el.  If this happens, the feature `seq'
-;; being already provided, the correct version of seq.el won't get loaded.
-(require 'seq)
-(if (fboundp 'seq-map-indexed)
-    (defalias 'elbank-seq-map-indexed #'seq-map-indexed)
-  (defun elbank-seq-map-indexed (function sequence)
-    "Return the result of applying FUNCTION to each element of SEQUENCE.
-Unlike `seq-map', FUNCTION takes two arguments: the element of
-the sequence, and its index within the sequence."
-    (let ((index 0))
-      (seq-map (lambda (elt)
-                 (prog1
-                     (funcall function elt index)
-                   (setq index (1+ index))))
-               sequence))))
 
 (require 'button)
 (require 'tabulated-list)
