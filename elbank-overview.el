@@ -234,6 +234,7 @@ If nothing important is at point, return nil."
 					:columns (seq-elt report 4)
 					:reverse-sort (seq-elt report 5)
 					:period (list type time))))
+	  (put-text-property beg (point) 'imenu-name (car report))
 	  (insert "\n"))))))
 
 (provide 'elbank-overview)
