@@ -178,11 +178,13 @@ If nothing important is at point, return nil."
 
 (defun elbank-overview--insert-account (account)
   "Insert ACCOUNT informations in the current buffer."
-  (insert (format "%s" (map-elt account 'label)))
-  (make-text-button (point-at-bol) (point)
-		    'follow-link t
-		    'action (lambda (&rest _)
-			      (elbank-list-transactions account)))
+  (insert "- ")
+  (let ((beg (point)))
+    (insert (format "%s" (map-elt account 'label)))
+    (make-text-button beg (point)
+		      'follow-link t
+		      'action (lambda (&rest _)
+				(elbank-list-transactions account))))
   (let* ((balance (format "%s"
 			  (map-elt account 'balance)))
 	 (fill-width (+ (- (seq-length (elbank--longest-account-label))
