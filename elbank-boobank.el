@@ -41,11 +41,11 @@
 
 (defun elbank-boobank-update ()
   "Update data from boobank."
-  (let* ((current (elbank-read-data))
+  (let* ((current elbank-data)
 	 (new (elbank-boobank--scrap-data))
 	 (merged (elbank--merge-data current new)))
     (elbank-write-data merged)
-    (elbank-read-data)))
+    (setq elbank-data merged)))
 
 (defun elbank-boobank--scrap-data ()
   "Return all data scraped from boobank."
