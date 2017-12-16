@@ -120,6 +120,9 @@ If TRANSACTION matches no category, return nil."
 			   key))
 		       elbank-categories)))
 
+(cl-defmethod (setf elbank-transaction-category) (store transaction)
+  (setf (map-elt transaction 'category) store))
+
 (cl-defun elbank-filter-transactions (&key account-id period category)
   "Filter transactions, all keys are optional.
 
