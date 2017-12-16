@@ -29,8 +29,6 @@
 (require 'json)
 (eval-and-compile (require 'cl-lib))
 
-(declare-function elbank-report "elbank-report.el")
-
 ;;;###autoload
 (defgroup elbank nil
   "Elbank"
@@ -101,24 +99,22 @@ Data is cached to `elbank-data'."
     (newline)
     (insert (format "(setq %s '%S)" "elbank-data" data))))
 
-(defun elbank-list-transactions (account)
-  "Display the list of transactions for ACCOUNT."
-  (elbank-report :account-id (intern (map-elt account 'id))
-		 :reverse-sort t))
-
 (defun elbank-transaction-category (transaction)
   "Return the category TRANSACTION belongs to.
-If TRANSACTION matches no category, return nil."
-  (seq-find #'identity
-	    (map-apply (lambda (key category)
-			 (when (seq-find
-				(lambda (regexp)
-				  (string-match-p (downcase regexp)
-						  (downcase (map-elt transaction
-								     'raw))))
-				category)
-			   key))
-		       elbank-categories)))
+If TRANSACTION matches no category, return an empty string."
+  (or (map-elt transaction 'category)
+      (seq-find #'identity
+		(map-apply
+		 (lambda (key category)
+		   (when (seq-find
+			  (lambda (regexp)
+			    (string-match-p
+			     (downcase regexp)
+			     (downcase (map-elt transaction 'raw))))
+			  category)
+		     key))
+		 elbank-categories))
+      ""))
 
 (cl-defmethod (setf elbank-transaction-category) (store transaction)
   (setf (map-elt transaction 'category) store))
@@ -152,11 +148,7 @@ representing the path of a category."
 
 (defun elbank-transaction-in-category-p (transaction category)
   "Return non-nil if TRANSACTION belongs to CATEGORY."
-  (string-prefix-p (downcase category)
-		   (downcase (or (elbank-transaction-category
-				  transaction)
-				 ""))))
-
+  (string-prefix-p category (elbank-transaction-category transaction) t))
 
 (defun elbank-filter-transactions-period (transactions period)
   "Return the subset of TRANSACTIONS that are within PERIOD.

@@ -184,7 +184,7 @@ If nothing important is at point, return nil."
     (make-text-button beg (point)
 		      'follow-link t
 		      'action (lambda (&rest _)
-				(elbank-list-transactions account))))
+				(elbank-overview--list-transactions account))))
   (let* ((balance (format "%s"
 			  (map-elt account 'balance)))
 	 (fill-width (+ (- (seq-length (elbank--longest-account-label))
@@ -238,6 +238,11 @@ If nothing important is at point, return nil."
 					:period (list type time))))
 	  (put-text-property beg (point) 'imenu-name (car report))
 	  (insert "\n"))))))
+
+(defun elbank-overview--list-transactions (account)
+  "Display the list of transactions for ACCOUNT."
+  (elbank-report :account-id (intern (map-elt account 'id))
+		 :reverse-sort t))
 
 (provide 'elbank-overview)
 ;;; elbank-overview.el ends here
