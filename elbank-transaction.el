@@ -65,7 +65,7 @@
 			   'face
 			   'font-lock-keyword-face)
 	(insert " ")
-	(insert (format "%s" (map-elt transaction key)))
+	(insert (format "%s" (elbank-transaction-elt transaction key)))
 	(insert "\n")))))
 
 (provide 'elbank-transaction)

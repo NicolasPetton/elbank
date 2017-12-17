@@ -56,7 +56,7 @@
 			     ((label "4"))
 			     ((label "5"))])))))
 
-    (it "should deduplicate new transactions"
+  (it "should deduplicate new transactions"
     (let* ((old `((accounts . [((id . "account1") (label . "account 1"))])
   		  (transactions (account1 . [((label "1"))
   					     ((label "2"))
@@ -74,6 +74,27 @@
 			     ((label "2"))
 			     ((label "3"))
 			     ((label "3"))
+			     ((label "3"))
+			     ((label "3"))])))))
+
+   (it "should ignore categories when deduplicating"
+    (let* ((old `((accounts . [((id . "account1") (label . "account 1"))])
+  		  (transactions (account1 . [((label "1"))
+  					     ((label "2"))
+  					     ((label "3") (category . "foo"))
+					     ((label "3") (category . "bar"))]))))
+  	   (new `((accounts . [((id . "account1") (label . "account 1"))])
+  		  (transactions (account1 . [((label "2"))
+					     ((label "3"))
+					     ((label "3"))
+					     ((label "3"))
+					     ((label "3"))]))))
+  	   (merged (elbank--merge-data old new)))
+      (expect (map-elt merged 'transactions) :to-equal
+	      '((account1 . [((label "1"))
+			     ((label "2"))
+			     ((label "3") (category . "foo"))
+			     ((label "3") (category . "bar"))
 			     ((label "3"))
 			     ((label "3"))]))))))
 

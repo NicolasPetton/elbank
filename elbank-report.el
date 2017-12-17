@@ -107,6 +107,7 @@ Available columns:
     (define-key map (kbd "G") #'elbank-report-group-by)
     (define-key map (kbd "S") #'elbank-report-sort-by)
     (define-key map (kbd "s") #'elbank-report-sort-reverse)
+    (define-key map (kbd "c") #'elbank-report-set-category)
     map)
   "Keymap for `elbank-report-mode'.")
 
@@ -114,6 +115,7 @@ Available columns:
   "Major mode for viewing a report.
 
 \\{elbank-report-mode-map}"
+  (setq-local revert-buffer-function #'elbank-report-refresh)
   (add-hook 'elbank-base-report-refresh-hook 'elbank-report-refresh nil t))
 
 (defvar elbank-report-amount-columns '(amount)
@@ -270,18 +272,17 @@ Return the report buffer."
 	      (not elbank-report-sort-reversed))
   (elbank-report-refresh))
 
-(defun elbank-report-refresh ()
+(defun elbank-report-refresh (&rest _)
   "Update the report in the current buffer.
 When `elbank-report-inhibit-update' is non-nil, do not update."
   (unless elbank-report-inhibit-update
     (let ((inhibit-read-only t)
-	  (transactions (elbank-report--with-categories
-			 (elbank-filter-transactions
-			  :account-id elbank-report-account-id
-			  :category elbank-report-category
-			  :period elbank-report-period)))
+	  (transactions (elbank-filter-transactions
+			 :account-id elbank-report-account-id
+			 :category elbank-report-category
+			 :period elbank-report-period))
 	  (inhibit-read-only t))
-      (save-excursion
+      (let ((pos (point)))
 	(erase-buffer)
 	(elbank-report--update-column-widths transactions)
 	(elbank-report--insert-preambule)
@@ -292,16 +293,21 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
 	  (elbank-report--insert-transactions transactions))
 	(when elbank-report-period
 	  (elbank-report--insert-separator "═")
-	  (elbank-report--insert-sum transactions))))))
+	  (elbank-report--insert-sum transactions))
+	(goto-char (min (point-max) pos))))))
 
-(defun elbank-report--with-categories (transactions)
-  "Return the list TRANSACTIONS with categories.
-Lookup and a `category' to each item of TRANSACTIONS."
-  (seq-map (lambda (trans)
-	     (cons (cons 'category
-			 (elbank-transaction-category trans))
-		   trans))
-	   transactions))
+(defun elbank-report-set-category (category)
+  "Prompt for a CATEGORY for the transaction at point."
+  (interactive (list (completing-read "Category: "
+				      (map-keys elbank-categories))))
+  (setf (elbank-transaction-elt (elbank-report--transaction-at-point) 'category)
+	category)
+  (elbank-write-data elbank-data)
+  (elbank-report-refresh))
+
+(defun elbank-report--transaction-at-point ()
+  "Return the transaction at point."
+  (get-text-property (point) 'transaction))
 
 (defun elbank-report--insert-preambule ()
   "Display the report filters in the current buffer."
@@ -339,7 +345,7 @@ Lookup and a `category' to each item of TRANSACTIONS."
 		  (seq-reduce (lambda (acc trans)
 				(max acc
 				     (seq-length
-				      (map-elt trans col ""))))
+				      (elbank-transaction-elt trans col ""))))
 			      transactions
 			      0)))
 	     (+ 2 (max row-max-width
@@ -348,18 +354,15 @@ Lookup and a `category' to each item of TRANSACTIONS."
 					     index)))))))
 	 elbank-report-columns)))
 
-(defun elbank-report--cell (transaction column)
+(cl-defgeneric elbank-report--cell (transaction column)
   "Return the text for the cell for TRANSACTION at COLUMN."
-  (or (pcase column
-	(`label (elbank-report--transaction-link transaction))
-	(_ (map-elt transaction column "")))
-      ""))
+  (elbank-transaction-elt transaction column ""))
 
-(defun elbank-report--transaction-link (transaction)
-  "Return a button text with the label of TRANSACTION.
+(cl-defmethod elbank-report--cell (transaction (_column (eql label)))
+    "Return a button text with the label of TRANSACTION.
 When clicking the button, jump to the transaction."
   (with-temp-buffer
-    (insert (map-elt transaction 'label))
+    (insert (elbank-transaction-elt transaction 'label))
     (make-text-button (point-at-bol) (point)
 		      'follow-link t
 		      'action
@@ -376,12 +379,14 @@ When clicking the button, jump to the transaction."
 (defun elbank-report--insert-transactions (transactions)
   "Insert TRANSACTIONS rows the current buffer."
   (seq-do (lambda (trans)
-	    (elbank-report--insert-row
-	     (seq-map (lambda (col)
-			(format "%s"
-				(elbank-report--cell trans col)))
-		      elbank-report-columns)
-	     t))
+	    (let ((beg (point)))
+	      (elbank-report--insert-row
+	       (seq-map (lambda (col)
+			  (format "%s"
+				  (elbank-report--cell trans col)))
+			elbank-report-columns)
+	       t)
+	      (put-text-property beg (point) 'transaction trans)))
 	  (elbank-report--sort-transactions transactions)))
 
 (defun elbank-report--insert-groups (transactions)
@@ -396,7 +401,7 @@ The grouping property is defined by `elbank-report-group-by'."
 	    (elbank-report--insert-sum (cdr group)))
 	  (elbank-report--sort-groups
 	   (seq-group-by (lambda (trans)
-			   (map-elt trans elbank-report-group-by ""))
+			   (elbank-transaction-elt trans elbank-report-group-by ""))
 			 transactions))))
 
 (defun elbank-report--insert-sum (transactions)
@@ -459,7 +464,7 @@ non-nil, or by the first column if nil."
 			 (car elbank-report-columns))))
     (elbank-report--sort transactions
 			 (lambda (trans)
-			   (map-elt trans sort-column ""))
+			   (elbank-transaction-elt trans sort-column ""))
 			 (seq-contains elbank-report-amount-columns sort-column))))
 
 (defun elbank-report--sort-groups (groups)

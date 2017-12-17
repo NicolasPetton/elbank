@@ -123,6 +123,14 @@ Note that it is not currently possible to manually add a category to a specific
 transaction, you always have to rely on `elbank-categories` to categorize
 transactions.
 
+### Categorizing single transactions
+
+To set a custom category to a specific transaction, go to a transaction row in
+any report and press `c`.
+
+Transactions with a custom category will override any matching category from
+`elbank-categories`.
+
 ### Customizing reports
 
 Many report options can be customized from within a report buffer.

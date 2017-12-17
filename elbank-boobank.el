@@ -26,6 +26,7 @@
 (require 'seq)
 (require 'map)
 (require 'json)
+(require 'cl-lib)
 
 (require 'elbank-common)
 
@@ -109,17 +110,33 @@ OLD and NEW are lists of transactions for the same account."
     (seq-concatenate 'vector old new-transactions)))
 
 (defun elbank--new-transactions (old new)
-  "Return all transactions not present in OLD bu present in NEW."
+  "Return all transactions not present in OLD bu present in NEW.
+When comparing transactions, ignore (manually set) categories."
   (apply #'seq-concatenate 'list
 	 (seq-map (lambda (trans)
-		    (let ((n (- (seq-count (lambda (elt) (equal elt trans)) new)
-				(seq-count (lambda (elt) (equal elt trans)) old))))
+		    (let ((n (- (elbank--count-transactions-like trans new)
+				(elbank--count-transactions-like trans old))))
 		      (when (> n 0)
 			(let ((result))
 			  (dotimes (_ n)
 			    (setq result (cons trans result)))
 			  result))))
 		  (seq-uniq new))))
+
+(defun elbank--count-transactions-like (transaction transactions)
+  "Return the number of transactions like TRANSACTION in TRANSACTIONS."
+  (seq-count (apply-partially #'elbank--transaction-equal-p transaction)
+	     transactions))
+
+(defun elbank--transaction-equal-p (transaction1 transaction2)
+  "Return non-nil if TRANSACTION1 equals TRANSACTION2.
+Categories are ignored when comparing."
+  (cl-labels ((without-category (transaction)
+				(map-remove (lambda (key _)
+					      (eq key 'category))
+				   	    transaction)))
+   (equal (without-category transaction1)
+	  (without-category transaction2))))
 
 (defun elbank--find-boobank-executable ()
   "Return the boobank executable.

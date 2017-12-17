@@ -27,6 +27,7 @@
 (require 'map)
 (require 'seq)
 (require 'json)
+(require 'subr-x)
 (eval-and-compile (require 'cl-lib))
 
 ;;;###autoload
@@ -99,25 +100,36 @@ Data is cached to `elbank-data'."
     (newline)
     (insert (format "(setq %s '%S)" "elbank-data" data))))
 
-(defun elbank-transaction-category (transaction)
-  "Return the category TRANSACTION belongs to.
-If TRANSACTION matches no category, return an empty string."
-  (or (map-elt transaction 'category)
-      (seq-find #'identity
-		(map-apply
-		 (lambda (key category)
-		   (when (seq-find
-			  (lambda (regexp)
-			    (string-match-p
-			     (downcase regexp)
-			     (downcase (map-elt transaction 'raw))))
-			  category)
-		     key))
-		 elbank-categories))
-      ""))
+(cl-defgeneric elbank-transaction-elt (transaction key &optional default)
+  "Return the value of TRANSACTION at KEY.
 
-(cl-defmethod (setf elbank-transaction-category) (store transaction)
-  (setf (map-elt transaction 'category) store))
+If the result is nil, return DEFAULT."
+  (map-elt transaction key default))
+
+(cl-defmethod elbank-transaction-elt (transaction (_key (eql category)) &optional default)
+  "Return the category of TRANSACTION.
+
+If the result is nil, return DEFAULT."
+  (let ((case-fold-search t)
+	(custom-category (map-elt transaction 'category)))
+    (if (or (null custom-category)
+	    (string-empty-p custom-category))
+	(seq-find #'identity
+		  (map-apply
+		   (lambda (key category)
+		     (when (seq-find
+			    (lambda (regexp)
+			      (string-match-p
+			       regexp
+			       (map-elt transaction 'raw)))
+			    category)
+		       key))
+		   elbank-categories)
+		  default)
+      custom-category)))
+
+(cl-defgeneric (setf elbank-transaction-elt) (store transaction key)
+  (setf (map-elt transaction key) store))
 
 (cl-defun elbank-filter-transactions (&key account-id period category)
   "Filter transactions, all keys are optional.
@@ -127,15 +139,18 @@ that belong to CATEGORY.
 
 ACCOUNT-ID is a symbol, PERIOD is a list of the form `(type
 time)', CATEGORY is a category string."
-  (elbank-filter-transactions-period
-   (elbank-filter-transactions-category
-    (if account-id
-	(map-elt (map-elt elbank-data 'transactions) account-id)
-      (elbank-all-transactions))
-    category)
-   period))
+  (thread-first (elbank-all-transactions)
+    (elbank--filter-transactions-account-id account-id)
+    (elbank--filter-transactions-period period)
+    (elbank--filter-transactions-category category)))
 
-(defun elbank-filter-transactions-category (transactions category)
+(defun elbank--filter-transactions-account-id (transactions account-id)
+  "Return a subset of TRANSACTIONS that belong to ACCOUNT-ID."
+  (if account-id
+	(map-elt (map-elt elbank-data 'transactions) account-id)
+    transactions))
+
+(defun elbank--filter-transactions-category (transactions category)
   "Return the subset of TRANSACTIONS that belong to CATEGORY.
 
 CATEGORY is a string of the form \"cat:subcat:subsubcat\"
@@ -148,9 +163,9 @@ representing the path of a category."
 
 (defun elbank-transaction-in-category-p (transaction category)
   "Return non-nil if TRANSACTION belongs to CATEGORY."
-  (string-prefix-p category (elbank-transaction-category transaction) t))
+  (string-prefix-p category (elbank-transaction-elt transaction 'category "") t))
 
-(defun elbank-filter-transactions-period (transactions period)
+(defun elbank--filter-transactions-period (transactions period)
   "Return the subset of TRANSACTIONS that are within PERIOD.
 
 PERIOD is a list of the form `(type time)', with `type' a

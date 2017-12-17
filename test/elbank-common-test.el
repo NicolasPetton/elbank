@@ -28,11 +28,20 @@
 (require 'map)
 (require 'elbank-common)
 
-(describe "Setting categories"
-  (it "Should set the category"
-    (let ((tr '((category . nil) (amount . "3000"))))
-      (setf (elbank-transaction-category tr) "foo")
-      (expect (elbank-transaction-category tr) :to-equal "foo"))))
+(describe "Transaction elements"
+  (it "should access transactions element"
+    (let ((tr '((amount . "2000")
+		(category . "Expenses"))))
+      (expect (elbank-transaction-elt tr 'amount) :to-equal "2000")
+      (expect (elbank-transaction-elt tr 'category) :to-equal "Expenses")))
+
+  (it "should set transactions element"
+    (let ((tr '((amount . "2000")
+		(category . "Expenses"))))
+      (setf (elbank-transaction-elt tr 'amount) "-1500")
+      (setf (elbank-transaction-elt tr 'category) "Income")
+      (expect (elbank-transaction-elt tr 'amount) :to-equal "-1500")
+      (expect (elbank-transaction-elt tr 'category) :to-equal "Income"))))
 
 (provide 'elbank-common-test)
 ;;; elbank-common-test.el ends here
