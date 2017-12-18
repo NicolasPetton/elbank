@@ -71,8 +71,8 @@
 
 (defun elbank--fetch-boobank-transactions (account)
   "Fetch and return all transactions from ACCOUNT."
-  (let* ((since "1970") ;; the current strategy is to always fetch all data.  If
-	 ;; needed, this can be optimized later on.
+  (let* ((since "1970") ; the current strategy is to always fetch all data.  If
+			; needed, this can be optimized later on.
 	 (id (map-elt account 'id))
 	 ;; Some backends do not support listing transactions, ignore errors
 	 (command (format "%s -f json history %s %s 2> /dev/null"
