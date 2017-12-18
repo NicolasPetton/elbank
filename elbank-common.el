@@ -194,14 +194,14 @@ Comparison is done by formatting periods using FORMAT."
   (apply #'encode-time
 	 (seq-map (lambda (el)
 		    (or el 0))
-		  (parse-time-string (map-elt transaction 'date)))))
+		  (parse-time-string (elbank-transaction-elt transaction 'date)))))
 
 (defun elbank-sum-transactions (transactions)
   "Return the sum of all TRANSACTIONS.
 TRANSACTIONS are expected to all use the same currency."
   (seq-reduce (lambda (acc transaction)
 		(+ acc
-		   (string-to-number (map-elt transaction 'amount))))
+		   (string-to-number (elbank-transaction-elt transaction 'amount))))
 	      transactions
 	      0))
 
