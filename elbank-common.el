@@ -129,7 +129,10 @@ If the result is nil, return DEFAULT."
       custom-category)))
 
 (cl-defgeneric (setf elbank-transaction-elt) (store transaction key)
-  (setf (map-elt transaction key) store))
+  (if (map-contains-key transaction key)
+      (setf (map-elt transaction key) store)
+    ;; Always mutate transactions in place.
+    (nconc transaction (list (cons key store)))))
 
 (cl-defun elbank-filter-transactions (&key account-id period category)
   "Filter transactions, all keys are optional.

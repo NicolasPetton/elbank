@@ -41,7 +41,14 @@
       (setf (elbank-transaction-elt tr 'amount) "-1500")
       (setf (elbank-transaction-elt tr 'category) "Income")
       (expect (elbank-transaction-elt tr 'amount) :to-equal "-1500")
-      (expect (elbank-transaction-elt tr 'category) :to-equal "Income"))))
+      (expect (elbank-transaction-elt tr 'category) :to-equal "Income")))
+
+  (it "should mutate transactions in place when adding new keys"
+    (let* ((original '((amount . "2000")))
+	   (tr original))
+      (setf (elbank-transaction-elt tr 'category) "Income")
+      (expect (elbank-transaction-elt tr 'category) :to-equal "Income")
+      (expect original :to-be tr))))
 
 (provide 'elbank-common-test)
 ;;; elbank-common-test.el ends here
