@@ -27,6 +27,7 @@
 (require 'map)
 (require 'json)
 (require 'cl-lib)
+(require 'subr-x)
 
 (require 'elbank-common)
 
@@ -51,17 +52,26 @@
 (defun elbank-boobank--scrap-data ()
   "Return all data scraped from boobank."
   (let* ((accounts (elbank--fetch-boobank-accounts))
-	 (transactions (seq-map (lambda (account)
-				  (list (intern (map-elt account 'id))
-					(elbank--fetch-boobank-transactions account)))
-				accounts)))
-    (message "Elbank: fetching done!")
+	 (transactions (apply #'seq-concatenate 'list
+			      (seq-map #'elbank-boobank--scrap-transactions
+				       accounts))))
     `((accounts . ,accounts)
-      (transactions . ,(map-apply (lambda (key val)
-				    ;; Fetched transactions data is a nested
-				    ;; vector, so only keep the first one.
-				    (cons key (seq-elt val 0)))
-				  transactions)))))
+      (transactions . ,transactions))))
+
+(defun elbank-boobank--scrap-transactions (account)
+  "Return a list of transactions for ACCOUNT scraped from boobank."
+  (seq-map (lambda (data)
+	     (elbank-boobank--make-transaction data account))
+	   (elbank--fetch-boobank-transactions account)))
+
+(defun elbank-boobank--make-transaction (data account)
+  "Return a transaction alist from DATA with its account value set to ACCOUNT.
+
+If an account already exists with the same id as ACCOUNT, use
+that account instead of the new ACCOUNT."
+  (let* ((account-to-use (or (elbank-account-with-id (map-elt account 'id))
+			     account)))
+    (cons (cons 'account account-to-use) data)))
 
 (defun elbank--fetch-boobank-accounts ()
   "Return all accounts in boobank."
@@ -89,25 +99,36 @@ The account list is taken from NEW, so accounts not present in
 NEW are deleted.  New transactions for existing accounts are
 *only* added, no transaction is removed."
   (if old
-      `((accounts . ,(map-elt new 'accounts))
+      `((accounts . ,(elbank--merge-accounts
+		      (map-elt old 'accounts)
+		      (map-elt new 'accounts)))
 	(transactions . ,(elbank--merge-transactions
 			  (map-elt old 'transactions)
 			  (map-elt new 'transactions))))
     new))
 
+(defun elbank--merge-accounts (old new)
+  "Merge the account list from OLD and NEW.
+Data from existing accounts in OLD are updated with new data from
+NEW."
+  (seq-do (lambda (new-acc)
+	    (when-let ((acc (seq-find (lambda (acc)
+					(equal (map-elt new-acc 'id)
+					       (map-elt acc 'id)))
+				      old)))
+	      (map-apply (lambda (key val)
+			   (map-put acc key val))
+			 new-acc)))
+	  new)
+  (let ((new-accounts (seq-remove (lambda (acc)
+				    (seq-contains old acc))
+				  new)))
+    (seq-concatenate 'list old new-accounts)))
+
 (defun elbank--merge-transactions (old new)
   "Merge the transaction list from OLD and NEW."
-  (map-apply (lambda (id transactions)
-	       `(,id . ,(elbank--merge-account-transactions
-			 transactions
-			 (map-elt new id))))
-	     old))
-
-(defun elbank--merge-account-transactions (old new)
-  "Merge the transactions from OLD and NEW.
-OLD and NEW are lists of transactions for the same account."
   (let ((new-transactions (elbank--new-transactions old new)))
-    (seq-concatenate 'vector old new-transactions)))
+    (seq-concatenate 'list old new-transactions)))
 
 (defun elbank--new-transactions (old new)
   "Return all transactions not present in OLD bu present in NEW.
@@ -125,18 +146,15 @@ When comparing transactions, ignore (manually set) categories."
 
 (defun elbank--count-transactions-like (transaction transactions)
   "Return the number of transactions like TRANSACTION in TRANSACTIONS."
-  (seq-count (apply-partially #'elbank--transaction-equal-p transaction)
-	     transactions))
-
-(defun elbank--transaction-equal-p (transaction1 transaction2)
-  "Return non-nil if TRANSACTION1 equals TRANSACTION2.
-Categories are ignored when comparing."
-  (cl-labels ((without-category (transaction)
-				(map-remove (lambda (key _)
-					      (eq key 'category))
-				   	    transaction)))
-   (equal (without-category transaction1)
-	  (without-category transaction2))))
+  (seq-length (elbank-filter-transactions
+	       transactions
+	       :raw (map-elt transaction 'raw)
+	       :account (map-elt transaction 'account)
+	       :amount (map-elt transaction 'amount)
+	       :date (map-elt transaction 'date)
+	       :vdate (map-elt transaction 'vdate)
+	       :rdate (map-elt transaction 'rdate)
+	       :label (map-elt transaction 'label))))
 
 (defun elbank--find-boobank-executable ()
   "Return the boobank executable.
