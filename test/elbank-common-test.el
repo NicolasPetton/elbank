@@ -48,7 +48,19 @@
 	   (tr original))
       (setf (elbank-transaction-elt tr 'category) "Income")
       (expect (elbank-transaction-elt tr 'category) :to-equal "Income")
-      (expect original :to-be tr))))
+      (expect original :to-be tr)))
+
+  (it "split transactions should have no category"
+    (let ((tr '((category . (("foo" . 20) ("bar" . 10))))))
+      (expect (elbank-transaction-elt tr 'category) :to-be nil)
+      (expect (elbank-transaction-in-category-p tr "foo") :to-be nil)
+      (expect (elbank-transaction-in-category-p tr "bar") :to-be nil)))
+
+  (it "transactions with multiple categories should be split."
+    (let ((tr1 '((category . (("foo" . 20) ("bar" . 10)))))
+	  (tr2 '((category . "foo"))))
+      (expect (elbank-transaction-split-p tr1) :to-be-truthy)
+      (expect (elbank-transaction-split-p tr2) :to-be nil))))
 
 (provide 'elbank-common-test)
 ;;; elbank-common-test.el ends here

@@ -141,7 +141,9 @@ If nothing important is at point, return nil."
 (defun elbank-overview-update-data ()
   "Read new data from boobank and update the buffer."
   (interactive)
+  (message "Elbank: updating...")
   (elbank-boobank-update)
+  (message "Elbank: done!")
   (elbank-overview-update-buffer))
 
 (defun elbank-overview--insert-hr ()
@@ -241,7 +243,7 @@ If nothing important is at point, return nil."
 
 (defun elbank-overview--list-transactions (account)
   "Display the list of transactions for ACCOUNT."
-  (elbank-report :account-id (intern (map-elt account 'id))
+  (elbank-report :account-id (map-elt account 'id)
 		 :reverse-sort t))
 
 (provide 'elbank-overview)

@@ -175,7 +175,8 @@ Values are lists of spent amounts and budgeted amounts for a category."
 	 (when (elbank-transaction-in-category-p trans cat)
 	   cat))
        (seq-map #'car elbank-budget)))
-    (elbank-filter-transactions :period elbank-report-period))))
+    (elbank-filter-transactions (elbank-all-transactions)
+				:period elbank-report-period))))
 
 (provide 'elbank-budget)
 ;;; elbank-budget.el ends here

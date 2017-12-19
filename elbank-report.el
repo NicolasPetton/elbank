@@ -206,7 +206,7 @@ Return the report buffer."
 	 (label (completing-read "Select account: " labels)))
     (setq elbank-report-account-id
 	  (when-let ((position (seq-position labels label)))
-	    (intern (map-elt (seq-elt accounts position) 'id)))))
+	    (map-elt (seq-elt accounts position) 'id))))
   (elbank-report-refresh))
 
 (defun elbank-report-filter-period ()
@@ -278,9 +278,10 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
   (unless elbank-report-inhibit-update
     (let ((inhibit-read-only t)
 	  (transactions (elbank-filter-transactions
+			 (elbank-all-transactions)
 			 :account-id elbank-report-account-id
-			 :category elbank-report-category
-			 :period elbank-report-period))
+			 :period elbank-report-period
+			 :category elbank-report-category))
 	  (inhibit-read-only t))
       (let ((pos (point)))
 	(erase-buffer)
@@ -296,18 +297,62 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
 	  (elbank-report--insert-sum transactions))
 	(goto-char (min (point-max) pos))))))
 
-(defun elbank-report-set-category (category)
-  "Prompt for a CATEGORY for the transaction at point."
+(defun elbank-report-set-category (category &optional transaction)
+  "Update the CATEGORY of TRANSACTION.
+When called interactively, prompt for the category.
+
+If TRANSACTION is nil, set the category of the transaction at
+point."
   (interactive (list (completing-read "Category: "
 				      (map-keys elbank-categories))))
-  (setf (elbank-transaction-elt (elbank-report--transaction-at-point) 'category)
+  (unless transaction
+    (setq transaction (elbank-report--transaction-at-point)))
+  (setf (elbank-transaction-elt transaction 'category)
 	category)
   (elbank-write-data elbank-data)
   (elbank-report-refresh))
 
+(defun elbank-report-split-transaction ()
+  "Split the transaction at point.
+
+Splitting is done by assigning multiple categories to
+transaction, each one with an amount."
+  (interactive)
+  (let* ((trans (elbank-report--transaction-at-point))
+	 (amount-left (string-to-number
+		       (elbank-transaction-elt trans 'amount)))
+	 (categories '()))
+    (when (elbank-sub-transaction-p trans)
+      (user-error "Cannot split sub transactions"))
+    (while (not (zerop amount-left))
+      (let ((label (completing-read "Category: "
+				    (map-keys elbank-categories)))
+	    (amount (read-from-minibuffer
+		     (format "Amount (%s left): " amount-left)
+		     (number-to-string amount-left))))
+	(push (cons label amount) categories)
+	(setq amount-left (/ (round (* 100 (- amount-left
+					      (string-to-number amount))))
+			     100.0 ))))
+    (elbank-report-set-category categories)))
+
+(defun elbank-report-unsplit-transaction ()
+  "Unsplit the parent of the sub transaction at point.
+
+Combining the parent is done by setting its category to nil."
+  (interactive)
+  (let ((trans (elbank-report--transaction-at-point)))
+    (unless (elbank-sub-transaction-p trans)
+      (user-error "Cannot combine transaction"))
+    (elbank-report-set-category nil (elbank-transaction-elt trans 'split-from))))
+
 (defun elbank-report--transaction-at-point ()
-  "Return the transaction at point."
-  (get-text-property (point) 'transaction))
+  "Return the transaction at point.
+
+Signal an error if there is no transaction at point."
+  (let ((tr (get-text-property (point) 'transaction)))
+    (unless tr (user-error "No transaction at point"))
+    tr))
 
 (defun elbank-report--insert-preambule ()
   "Display the report filters in the current buffer."
@@ -324,7 +369,8 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
 		    (insert (format "%s" (cdr filter)))
 		    (insert "\n")))
 		`(("Account:" . ,(and elbank-report-account-id
-				      (map-elt (elbank-account elbank-report-account-id)
+				      (map-elt (elbank-account-with-id
+						elbank-report-account-id)
 					       'label)))
 		  ("Period:" . ,(and elbank-report-period
 				     (elbank-format-period elbank-report-period)))
