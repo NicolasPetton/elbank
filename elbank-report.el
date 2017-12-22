@@ -280,8 +280,8 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
 	  (transactions (elbank-filter-transactions
 			 (elbank-all-transactions)
 			 :account-id elbank-report-account-id
-			 :category elbank-report-category
-			 :period elbank-report-period))
+			 :period elbank-report-period
+			 :category elbank-report-category))
 	  (inhibit-read-only t))
       (let ((pos (point)))
 	(erase-buffer)

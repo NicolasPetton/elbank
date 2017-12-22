@@ -28,6 +28,7 @@
 (require 'buttercup)
 (require 'map)
 (require 'seq)
+(require 'cl-lib)
 (require 'elbank-boobank)
 
 (describe "Merging data"
@@ -54,7 +55,7 @@
       (expect (seq-length merged) :to-be 3)
       (expect (car merged) :to-be (car old))
       (expect (cadr merged) :to-be (cadr old))
-      (expect (caddr merged) :to-be (cadr new))))
+      (expect (cl-caddr merged) :to-be (cadr new))))
 
   (it "merging accounts should update current accounts values"
     (let* ((old '(((id . 1) (balance . "3000"))))
