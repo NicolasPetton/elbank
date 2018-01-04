@@ -75,7 +75,7 @@ that account instead of the new ACCOUNT."
 
 (defun elbank--fetch-boobank-accounts ()
   "Return all accounts in boobank."
-  (let ((command (format "%s -f json ls" (elbank--find-boobank-executable))))
+  (let ((command (format "%s -f json ls 2>/dev/null" (elbank--find-boobank-executable))))
     (message "Elbank: fetching accounts...")
     (json-read-from-string (shell-command-to-string command))))
 
