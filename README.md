@@ -32,7 +32,7 @@ You will need Emacs 25+.
 - [Install Weboob](http://weboob.org/install) and run `boobank` configure your
   bank accounts;
   
-- Install Elbank (not in Melpa yet);
+- Install Elbank from [MELPA](http://melpa.org/#/elbank).
 
 - Run `M-x elbank-overview`.
 
