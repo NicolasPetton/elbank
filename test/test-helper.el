@@ -1,6 +1,6 @@
 ;;; test-helper.el --- Helper functions to test elbank  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 Nicolas Petton
+;; Copyright (C) 2017-2018 Nicolas Petton
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
 

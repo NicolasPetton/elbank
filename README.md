@@ -193,7 +193,7 @@ Yes, please do! See [CONTRIBUTING][] for guidelines.
 
 ## License
 
-See [COPYING][]. Copyright (c) 2017 Nicolas Petton.
+See [COPYING][]. Copyright (c) 2017-2018 Nicolas Petton.
 
 
 [CONTRIBUTING]: ./CONTRIBUTING.md
