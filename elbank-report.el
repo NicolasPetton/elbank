@@ -108,6 +108,8 @@ Available columns:
     (define-key map (kbd "S") #'elbank-report-sort-by)
     (define-key map (kbd "s") #'elbank-report-sort-reverse)
     (define-key map (kbd "c") #'elbank-report-set-category)
+    (define-key map (kbd "+") #'elbank-report-split-transaction)
+    (define-key map (kbd "-") #'elbank-report-unsplit-transaction)
     map)
   "Keymap for `elbank-report-mode'.")
 
