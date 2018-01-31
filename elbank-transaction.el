@@ -48,6 +48,13 @@
     (elbank-transaction-mode)
     (elbank-transaction--refresh transaction)))
 
+(cl-defgeneric elbank-transaction--field (transaction key)
+  "Return the label of the KEY of TRANSACTION."
+  (elbank-transaction-elt transaction key))
+
+(cl-defmethod elbank-transaction--field (transaction (_key (eql account)))
+  (elbank-account-name (elbank-transaction-elt transaction 'account)))
+
 (defun elbank-transaction--refresh (transaction)
   "Populate the current buffer with the details of TRANSACTION."
   (let ((inhibit-read-only t)
@@ -65,7 +72,7 @@
 			   'face
 			   'font-lock-keyword-face)
 	(insert " ")
-	(insert (format "%s" (elbank-transaction-elt transaction key)))
+	(insert (format "%s" (elbank-transaction--field transaction key)))
 	(insert "\n")))))
 
 (provide 'elbank-transaction)
