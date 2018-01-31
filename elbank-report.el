@@ -186,10 +186,10 @@ Return the report buffer."
     (when columns
       (setq-local elbank-report-columns columns))
     (when (called-interactively-p 'interactive)
-        (let ((elbank-report-inhibit-update t))
-	  (elbank-report-filter-account)
-	  (elbank-report-filter-period)
-	  (elbank-report-filter-category)))
+      (let ((elbank-report-inhibit-update t))
+	(elbank-report-filter-account)
+	(elbank-report-filter-period)
+	(elbank-report-filter-category)))
     (elbank-report-refresh)
     buf))
 
@@ -267,9 +267,9 @@ Return the report buffer."
   (interactive (list (completing-read "Sort by: "
 				      elbank-report-available-columns)))
   (setq-local elbank-report-sort-by
-	      	      (if (string-empty-p column-name)
+	      (if (string-empty-p column-name)
 		  nil
-		  (intern column-name)))
+		(intern column-name)))
   (elbank-report-refresh))
 
 (defun elbank-report-sort-reverse ()
