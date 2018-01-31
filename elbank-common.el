@@ -110,6 +110,16 @@ Data is cached to `elbank-data'."
 		       id))
 	    (map-elt elbank-data 'accounts)))
 
+(defun elbank-account-name (account)
+  "Return a human-readable name for ACCOUNT."
+  (format "%s@%s"
+          (elbank-account-group account)
+          (map-elt account 'label)))
+
+(defun elbank-account-group (account)
+  "Return the group into which ACCOUNT is classified."
+  (cadr (split-string (map-elt account 'id) "@")))
+
 (cl-defgeneric elbank-transaction-elt (transaction key &optional default)
   "Return the value of TRANSACTION at KEY.
 
