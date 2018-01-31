@@ -413,7 +413,7 @@ Signal an error if there is no transaction at point."
     (elbank-report--truncate str)))
 
 (cl-defmethod elbank-report--cell (transaction (_column (eql label)))
-    "Return a button text with the label of TRANSACTION.
+  "Return a button text with the label of TRANSACTION.
 When clicking the button, jump to the transaction."
   (with-temp-buffer
     (insert (elbank-transaction-elt transaction 'label))
