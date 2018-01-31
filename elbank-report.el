@@ -125,6 +125,9 @@ Available columns:
   "List of columns for which values are numbers.")
 (make-variable-buffer-local 'elbank-report-amount-columns)
 
+(defvar elbank-report-max-column-width 40
+  "Maximum width a report column can take.")
+
 (defvar elbank-report-group-by nil
   "Column by which transactions are grouped.")
 (make-variable-buffer-local 'elbank-report-group-by)
@@ -397,15 +400,17 @@ Signal an error if there is no transaction at point."
 				      (elbank-transaction-elt trans col ""))))
 			      transactions
 			      0)))
-	     (+ 2 (max row-max-width
-		       (seq-length (symbol-name
-				    (seq-elt elbank-report-columns
-					     index)))))))
+	     (min (+ 2 (max row-max-width
+			    (seq-length (symbol-name
+					 (seq-elt elbank-report-columns
+						  index)))))
+		  elbank-report-max-column-width)))
 	 elbank-report-columns)))
 
 (cl-defgeneric elbank-report--cell (transaction column)
   "Return the text for the cell for TRANSACTION at COLUMN."
-  (elbank-transaction-elt transaction column ""))
+  (let ((str (elbank-transaction-elt transaction column "")))
+    (elbank-report--truncate str)))
 
 (cl-defmethod elbank-report--cell (transaction (_column (eql label)))
     "Return a button text with the label of TRANSACTION.
@@ -417,7 +422,14 @@ When clicking the button, jump to the transaction."
 		      'action
 		      (lambda (&rest _)
 			(elbank-show-transaction transaction)))
-    (buffer-string)))
+    (elbank-report--truncate (buffer-string))))
+
+(defun elbank-report--truncate (str)
+  "Truncate STR to `elbank-report-max-column-width'.
+If STR overflows, add an ellipsis."
+  (if (> (seq-length str) elbank-report-max-column-width)
+      (format "%s…" (seq-take str (- elbank-report-max-column-width 1)))
+    str))
 
 (defun elbank-report--insert-column-titles ()
   "Insert the report headers into the current buffer."
