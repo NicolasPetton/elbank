@@ -71,6 +71,10 @@ If an account already exists with the same id as ACCOUNT, use
 that account instead of the new ACCOUNT."
   (let* ((account-to-use (or (elbank-account-with-id (map-elt account 'id))
 			     account)))
+    ;; Some banks add a category to transactions, which conflicts with elbank's
+    ;; categories, so put the category in `bank-category' instead.
+    (map-put data 'bank-category (map-elt data 'category))
+    (map-put data 'category nil)
     (cons (cons 'account account-to-use) data)))
 
 (defun elbank--fetch-boobank-accounts ()
