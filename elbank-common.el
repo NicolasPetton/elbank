@@ -81,7 +81,7 @@ Example of categories
 (defvar elbank-data nil
   "Alist of all accounts and transactions.")
 
-(defvar elbank-report-available-columns '(date rdate label raw category amount)
+(defvar elbank-report-available-columns '(date rdate label raw category account amount)
   "List of all available columns in reports.")
 
 
