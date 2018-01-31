@@ -186,12 +186,43 @@ Return the report buffer."
     (when columns
       (setq-local elbank-report-columns columns))
     (when (called-interactively-p 'interactive)
-        (let ((elbank-report-inhibit-update t))
-	  (elbank-report-filter-account)
-	  (elbank-report-filter-period)
-	  (elbank-report-filter-category)))
+      (let ((elbank-report-inhibit-update t))
+	(elbank-report-filter-account)
+	(elbank-report-filter-period)
+	(elbank-report-filter-category)))
     (elbank-report-refresh)
     buf))
+
+(defun elbank-report--all-saved-reports ()
+  "Return a list of all saved reports, monthly and yearly."
+  (append elbank-saved-monthly-reports elbank-saved-yearly-reports))
+
+(defun elbank-report--open-saved-report (report period-type)
+  "Open a buffer presenting REPORT.
+PERIOD-TYPE is either `month' or `year'."
+  (let ((time (if (eq period-type 'month)
+                  (car (last (elbank-transaction-months)))
+                (car (last (elbank-transaction-years))))))
+    (elbank-report :category (seq-elt report 1)
+                   :group-by (seq-elt report 2)
+                   :sort-by (seq-elt report 3)
+                   :columns (seq-elt report 4)
+                   :reverse-sort (seq-elt report 5)
+                   :period (list period-type time))))
+
+(defun elbank-report-open-by-name (name)
+  "Open report named NAME."
+  (interactive (list (completing-read
+                      "Report: "
+                      (seq-map (lambda (report) (seq-elt report 0))
+                               (elbank-report--all-saved-reports)))))
+  (when-let* ((report (seq-find
+                       (lambda (report) (string= (seq-elt report 0) name))
+                       (elbank-report--all-saved-reports)))
+              (type (if (seq-contains elbank-saved-monthly-reports report)
+                        'month
+                      'year)))
+    (elbank-report--open-saved-report report type)))
 
 (defun elbank-report-filter-category ()
   "Prompt for a category and update the report buffer."
@@ -267,9 +298,9 @@ Return the report buffer."
   (interactive (list (completing-read "Sort by: "
 				      elbank-report-available-columns)))
   (setq-local elbank-report-sort-by
-	      	      (if (string-empty-p column-name)
+	      (if (string-empty-p column-name)
 		  nil
-		  (intern column-name)))
+		(intern column-name)))
   (elbank-report-refresh))
 
 (defun elbank-report-sort-reverse ()
