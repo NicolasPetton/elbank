@@ -118,6 +118,7 @@ Available columns:
 
 \\{elbank-report-mode-map}"
   (setq-local revert-buffer-function #'elbank-report-refresh)
+  (setq-local truncate-lines t)
   (add-hook 'elbank-base-report-refresh-hook 'elbank-report-refresh nil t))
 
 (defvar elbank-report-amount-columns '(amount)
