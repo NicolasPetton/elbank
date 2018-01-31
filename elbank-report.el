@@ -61,8 +61,9 @@ Available columns:
 - `label'
 - `raw' (raw transaction text)
 - `category'
+- `account'
 - `amount'."
-    :type `(repeat (list (string :tag "Name")
+  :type `(repeat (list (string :tag "Name")
 		       (string :tag "Category")
 		       (symbol :tag "Group by")
 		       (symbol :tag "Sort by" :value date)
@@ -423,6 +424,10 @@ When clicking the button, jump to the transaction."
 		      (lambda (&rest _)
 			(elbank-show-transaction transaction)))
     (elbank-report--truncate (buffer-string))))
+
+(cl-defmethod elbank-report--cell (transaction (_column (eql account)))
+  "Return the label of the account associated with TRANSACTION."
+  (elbank-report--truncate (elbank-account-name (elbank-transaction-elt transaction 'account))))
 
 (defun elbank-report--truncate (str)
   "Truncate STR to `elbank-report-max-column-width'.
