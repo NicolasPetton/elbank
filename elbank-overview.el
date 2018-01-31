@@ -203,14 +203,12 @@ If nothing important is at point, return nil."
 
 (defun elbank-overview--insert-saved-reports-type (type)
   "Insert links to saved reports of period TYPE."
-  (let ((label) (reports) (time))
+  (let (label reports)
     (pcase type
       (`month (setq label "Monthly reports")
-	      (setq reports elbank-saved-monthly-reports)
-	      (setq time (car (last (elbank-transaction-months)))))
+	      (setq reports elbank-saved-monthly-reports))
       (`year (setq label "Yearly reports")
-	     (setq reports elbank-saved-yearly-reports)
-	     (setq time (car (last (elbank-transaction-years))))))
+	     (setq reports elbank-saved-yearly-reports)))
     (when reports
       (insert label)
       (put-text-property (point-at-bol) (point)
@@ -226,12 +224,7 @@ If nothing important is at point, return nil."
 	  (make-button beg (point)
 		       'action
 		       (lambda (&rest _)
-			 (elbank-report :category (seq-elt report 1)
-					:group-by (seq-elt report 2)
-					:sort-by (seq-elt report 3)
-					:columns (seq-elt report 4)
-					:reverse-sort (seq-elt report 5)
-					:period (list type time))))
+			 (elbank-report--open-saved-report report type)))
 	  (put-text-property beg (point) 'imenu-name (car report))
 	  (insert "\n"))))))
 
