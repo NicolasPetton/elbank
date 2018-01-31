@@ -398,7 +398,7 @@ Signal an error if there is no transaction at point."
 		  (seq-reduce (lambda (acc trans)
 				(max acc
 				     (seq-length
-				      (elbank-transaction-elt trans col ""))))
+				      (elbank-report--cell trans col))))
 			      transactions
 			      0)))
 	     (min (+ 2 (max row-max-width
