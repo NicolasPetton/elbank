@@ -58,9 +58,9 @@
       (expect (cadr merged) :to-be (cadr old))
       (expect (cl-caddr merged) :to-be (cadr new))))
 
-  (it "should not duplicate accounts when merging"
-    (let* ((old '(((id . "1") (label "old"))))
-	   (new '(((id . "1") (label "new"))))
+  (it "should not duplicate accounts when there are new fields"
+    (let* ((old '(((id . "1") (foo "old"))))
+	   (new '(((id . "1") (foo "old") (bar "new"))))
 	   (merged (elbank--merge-accounts old new)))
       (expect (seq-length merged) :to-be 1)
       (expect (car merged) :to-be (car old))))
