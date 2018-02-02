@@ -47,19 +47,27 @@
 	      :to-equal '("1" "2" "3" "4" "5"))))
 
   (it "should keep existing accounts when merging accounts"
-    (let* ((old '(((id . 1))
-		  ((id . 2))))
-	   (new '(((id . 1))
-		  ((id . 3))))
+    (let* ((old '(((id . "1"))
+		  ((id . "2"))))
+	   (new '(((id . "1"))
+		  ((id . "3"))))
 	   (merged (elbank--merge-accounts old new)))
+      (message "%s" merged)
       (expect (seq-length merged) :to-be 3)
       (expect (car merged) :to-be (car old))
       (expect (cadr merged) :to-be (cadr old))
       (expect (cl-caddr merged) :to-be (cadr new))))
 
+  (it "should not duplicate accounts when merging"
+    (let* ((old '(((id . "1") (label "old"))))
+	   (new '(((id . "1") (label "new"))))
+	   (merged (elbank--merge-accounts old new)))
+      (expect (seq-length merged) :to-be 1)
+      (expect (car merged) :to-be (car old))))
+
   (it "merging accounts should update current accounts values"
-    (let* ((old '(((id . 1) (balance . "3000"))))
-	   (new '(((id . 1) (balance . "3500"))))
+    (let* ((old '(((id . "1") (balance . "3000"))))
+	   (new '(((id . "1") (balance . "3500"))))
 	   (merged (elbank--merge-accounts old new)))
       (expect (seq-length merged) :to-be 1)
       (expect (map-elt (car merged) 'balance) :to-equal "3500")))

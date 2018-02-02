@@ -125,7 +125,10 @@ NEW."
 			 new-acc)))
 	  new)
   (let ((new-accounts (seq-remove (lambda (acc)
-				    (seq-contains old acc))
+				    (seq-find (lambda (old-acc)
+						(string= (map-elt old-acc 'id)
+							 (map-elt acc 'id)))
+					      old))
 				  new)))
     (seq-concatenate 'list old new-accounts)))
 
