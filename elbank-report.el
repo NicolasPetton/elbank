@@ -542,8 +542,8 @@ Unlike `elbank-report--insert-row', elements of ROW are displayed
 in bold."
   (let ((beg (point)))
     (elbank-report--insert-row row)
-       (add-text-properties beg (point)
-			    '(face bold))))
+    (add-text-properties beg (point)
+			 '(face bold))))
 
 (defun elbank-report--insert-separator (&optional separator)
   "Insert a separator line in the current buffer.
