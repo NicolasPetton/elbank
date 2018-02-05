@@ -330,9 +330,8 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
 	(if elbank-report-group-by
 	    (elbank-report--insert-groups transactions)
 	  (elbank-report--insert-transactions transactions))
-	(when elbank-report-period
-	  (elbank-report--insert-separator "═")
-	  (elbank-report--insert-sum transactions))
+	(elbank-report--insert-separator "═")
+	(elbank-report--insert-sum transactions)
 	(goto-char (min (point-max) pos))))))
 
 (defun elbank-report-set-category (category &optional transaction)
