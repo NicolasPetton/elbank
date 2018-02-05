@@ -210,6 +210,7 @@ PERIOD-TYPE is either `month' or `year'."
                    :reverse-sort (seq-elt report 5)
                    :period (list period-type time))))
 
+;;;###autoload
 (defun elbank-report-open-by-name (name)
   "Open report named NAME."
   (interactive (list (completing-read
