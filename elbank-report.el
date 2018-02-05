@@ -331,9 +331,8 @@ When `elbank-report-inhibit-update' is non-nil, do not update."
 	(if elbank-report-group-by
 	    (elbank-report--insert-groups transactions)
 	  (elbank-report--insert-transactions transactions))
-	(when elbank-report-period
-	  (elbank-report--insert-separator "═")
-	  (elbank-report--insert-sum transactions))
+	(elbank-report--insert-separator "═")
+	(elbank-report--insert-sum transactions)
 	(goto-char (min (point-max) pos))))))
 
 (defun elbank-report-set-category (category &optional transaction)
@@ -543,8 +542,8 @@ Unlike `elbank-report--insert-row', elements of ROW are displayed
 in bold."
   (let ((beg (point)))
     (elbank-report--insert-row row)
-       (add-text-properties beg (point)
-			    '(face bold))))
+    (add-text-properties beg (point)
+			 '(face bold))))
 
 (defun elbank-report--insert-separator (&optional separator)
   "Insert a separator line in the current buffer.
