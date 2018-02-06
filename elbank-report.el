@@ -26,6 +26,8 @@
 (require 'seq)
 (require 'map)
 (require 'subr-x)
+(require 'cl-lib)
+
 (require 'button)
 
 (require 'elbank-common)
@@ -350,29 +352,38 @@ point."
   (elbank-write-data elbank-data)
   (elbank-report-refresh))
 
-(defun elbank-report-split-transaction ()
-  "Split the transaction at point.
+(defun elbank-report--split-amount (amount)
+  "Split amount into a list of (CATEGORY-NAME . AMOUNT)."
+  (let ((amount-left amount)
+        (categories (list)))
+    (while (not (zerop amount-left))
+      (let ((sub-label (completing-read "Category: "
+				        (map-keys elbank-categories)))
+	    (sub-amount (read-from-minibuffer
+		         (format "Amount (%s left): " amount-left)
+		         (number-to-string amount-left))))
+        (push (cons sub-label sub-amount) categories)
+        (setq amount-left (/ (round (* 100 (- amount-left
+					      (string-to-number sub-amount))))
+			     100.0))))
+    categories))
+
+(defun elbank-report-split-transaction (&optional transaction)
+  "Split TRANSACTION, transaction at point if nil.
 
 Splitting is done by assigning multiple categories to
 transaction, each one with an amount."
   (interactive)
-  (let* ((trans (elbank-report--transaction-at-point))
-	 (amount-left (string-to-number
-		       (elbank-transaction-elt trans 'amount)))
-	 (categories '()))
-    (when (elbank-sub-transaction-p trans)
-      (user-error "Cannot split sub transactions"))
-    (while (not (zerop amount-left))
-      (let ((label (completing-read "Category: "
-				    (map-keys elbank-categories)))
-	    (amount (read-from-minibuffer
-		     (format "Amount (%s left): " amount-left)
-		     (number-to-string amount-left))))
-	(push (cons label amount) categories)
-	(setq amount-left (/ (round (* 100 (- amount-left
-					      (string-to-number amount))))
-			     100.0 ))))
-    (elbank-report-set-category categories)))
+  (let* ((trans (or transaction (elbank-report--transaction-at-point)))
+         (amount (elbank-transaction-elt trans 'amount)))
+    (if (elbank-sub-transaction-p trans)
+        (let* ((main-transaction (elbank-transaction-elt trans 'split-from))
+               (sub-category (map-elt trans 'category))
+               (all-categories (map-elt main-transaction 'category))
+               (other-categories (cl-remove (cons sub-category amount) all-categories :count 1 :test #'equal))
+               (new-sub-categories (elbank-report--split-amount (string-to-number amount))))
+          (elbank-report-set-category (append other-categories new-sub-categories) main-transaction))
+      (elbank-report-set-category (elbank-report--split-amount (string-to-number amount)) trans))))
 
 (defun elbank-report-unsplit-transaction ()
   "Unsplit the parent of the sub transaction at point.
