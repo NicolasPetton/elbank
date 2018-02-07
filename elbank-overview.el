@@ -142,9 +142,11 @@ If nothing important is at point, return nil."
   "Read new data from boobank and update the buffer."
   (interactive)
   (message "Elbank: updating...")
-  (elbank-boobank-update)
-  (message "Elbank: done!")
-  (elbank-overview-update-buffer))
+  (elbank-boobank-update
+   (lambda ()
+     (message "Elbank: done!")
+     (with-current-buffer elbank-overview-buffer-name
+       (elbank-overview-update-buffer)))))
 
 (defun elbank-overview--insert-hr ()
   "Insert a horizontal rule."

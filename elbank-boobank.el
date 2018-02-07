@@ -41,28 +41,25 @@
   "Boobank executable."
   :type '(file))
 
-(defun elbank-boobank-update ()
-  "Update data from boobank."
-  (let* ((current elbank-data)
-	 (new (elbank-boobank--scrap-data))
-	 (merged (elbank--merge-data current new)))
-    (elbank-write-data merged)
-    (setq elbank-data merged)))
+(defun elbank-boobank-update (&optional callback)
+  "Update data from boobank.
+When CALLBACK is non-nil, evaluate it when data is updated."
+  (elbank-boobank--scrap-data
+   (lambda (new-data)
+     (let ((merged-data (elbank--merge-data elbank-data new-data)))
+       (elbank-write-data merged-data)
+       (setq elbank-data merged-data)
+       (when callback (funcall callback))))))
 
-(defun elbank-boobank--scrap-data ()
-  "Return all data scraped from boobank."
-  (let* ((accounts (elbank--fetch-boobank-accounts))
-	 (transactions (apply #'seq-concatenate 'list
-			      (seq-map #'elbank-boobank--scrap-transactions
-				       accounts))))
-    `((accounts . ,accounts)
-      (transactions . ,transactions))))
-
-(defun elbank-boobank--scrap-transactions (account)
-  "Return a list of transactions for ACCOUNT scraped from boobank."
-  (seq-map (lambda (data)
-	     (elbank-boobank--make-transaction data account))
-	   (elbank--fetch-boobank-transactions account)))
+(defun elbank-boobank--scrap-data (callback)
+  "Evaluate CALLBACK with all data scraped from boobank."
+  (elbank--fetch-boobank-accounts
+   (lambda (accounts)
+     (elbank--fetch-boobank-transactions
+      accounts
+      (lambda (transactions)
+	(funcall callback `((accounts . ,accounts)
+			    (transactions . ,transactions))))))))
 
 (defun elbank-boobank--make-transaction (data account)
   "Return a transaction alist from DATA with its account value set to ACCOUNT.
@@ -77,16 +74,20 @@ that account instead of the new ACCOUNT."
     (map-put data 'category nil)
     (cons (cons 'account account-to-use) data)))
 
-(defun elbank--fetch-boobank-accounts ()
-  "Return all accounts in boobank."
+(defun elbank--fetch-boobank-accounts (callback)
+  "Execute CALLBACK with all fetched accounts from boobank."
   (let ((command (format "%s -f json ls 2>/dev/null" (elbank--find-boobank-executable))))
     (message "Elbank: fetching accounts...")
-    (json-read-from-string (shell-command-to-string command))))
+    (elbank-boobank--shell-command command callback)))
 
-(defun elbank--fetch-boobank-transactions (account)
-  "Fetch and return all transactions from ACCOUNT."
-  (let* ((since "1970") ; the current strategy is to always fetch all data.  If
-			; needed, this can be optimized later on.
+(defun elbank--fetch-boobank-transactions (accounts callback &optional acc)
+  "Fetch all transactions from all ACCOUNTS and evaluate CALLBACK.
+CALLBACK is called with all fetched transactions.
+
+ACC is used in recursive calls to accumulate fetched transactions."
+  (let* ((since "1970")	 ; the current strategy is to always fetch all data.  If
+  			 ; needed, this can be optimized later on.
+	 (account (car accounts))
 	 (id (map-elt account 'id))
 	 ;; Some backends do not support listing transactions, ignore errors
 	 (command (format "%s -f json history %s %s 2> /dev/null"
@@ -94,7 +95,35 @@ that account instead of the new ACCOUNT."
 			  id
 			  since)))
     (message "Elbank: fetching transactions for account %s..." id)
-    (json-read-from-string (shell-command-to-string command))))
+    (elbank-boobank--shell-command
+     command
+     (lambda (data)
+       (let* ((transactions (seq-map (lambda (datum)
+				       (elbank-boobank--make-transaction datum account))
+				     data))
+	      (all (seq-concatenate 'list acc transactions)))
+	 (if (cdr accounts)
+	     (elbank--fetch-boobank-transactions (cdr accounts) callback all)
+	   (funcall callback all)))))))
+
+(defun elbank-boobank--shell-command (command callback)
+  "Start a subprocess for COMMAND, and evaluate CALLBACK with its output."
+  (let ((bufname "*boobank process*"))
+    (when-let ((buf (get-buffer bufname)))
+      (with-current-buffer buf
+	(erase-buffer)))
+    (make-process :name "boobank"
+		  :buffer bufname
+		  :sentinel (lambda (process event)
+			      (if (eq (process-status process) 'exit)
+				  (let ((json-array-type 'list))
+				    (with-current-buffer (process-buffer process)
+				      (goto-char (point-min))
+				      (funcall callback (json-read))))
+				(error "Boobank fetch failed! %s" event)))
+		  :command (list shell-file-name
+				 shell-command-switch
+				 command))))
 
 (defun elbank--merge-data (old new)
   "Merge the dataset from OLD and NEW.
