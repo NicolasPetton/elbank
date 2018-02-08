@@ -134,6 +134,14 @@ the value at symbol `raw' if not. If both are nil, return DEFAULT."
   (or (map-elt transaction 'label nil)
       (map-elt transaction 'raw default)))
 
+(cl-defmethod elbank-transaction-elt (transaction (key (eql account)) &optional default)
+  "Return the account of TRANSACTION.
+
+If TRANSACTION is a split transaction, return the account of its parent transaction."
+  (if (elbank-sub-transaction-p transaction)
+      (elbank-transaction-elt (elbank-transaction-elt transaction 'split-from) 'account)
+    (cl-call-next-method transaction key default)))
+
 (cl-defmethod elbank-transaction-elt (transaction (_key (eql category)) &optional default)
   "Return the category of TRANSACTION.
 
