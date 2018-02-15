@@ -3,7 +3,7 @@
 ;; Copyright (C) 2017-2018 Nicolas Petton
 
 ;; Author: Nicolas Petton <nicolas@petton.fr>
-;; Version: 1.1
+;; Version: 1.2
 ;; Keywords: tools, personal-finances
 ;; Package-Requires: ((emacs "25") (seq "2.16"))
 
