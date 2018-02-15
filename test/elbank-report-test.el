@@ -68,6 +68,9 @@
               :to-have-been-called-with '(("cat1" . "2000")
                                           ("foo" . "1500")
                                           ("bar" . "500")) main-transaction))))
+(describe "Representing transaction"
+  (it "with a nil label"
+    (expect (elbank-report--cell '((label)) 'label) :to-equal "")))
 
 (provide 'elbank-report-test)
 ;;; elbank-report-test.el ends here
