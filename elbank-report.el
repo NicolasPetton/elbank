@@ -111,6 +111,7 @@ Available columns:
     (define-key map (kbd "S") #'elbank-report-sort-by)
     (define-key map (kbd "s") #'elbank-report-sort-reverse)
     (define-key map (kbd "c") #'elbank-report-set-category)
+    (define-key map (kbd "l") #'elbank-report-set-custom-label)
     (define-key map (kbd "+") #'elbank-report-split-transaction)
     (define-key map (kbd "-") #'elbank-report-unsplit-transaction)
     map)
@@ -349,6 +350,24 @@ point."
     (setq transaction (elbank-report--transaction-at-point)))
   (setf (elbank-transaction-elt transaction 'category)
 	category)
+  (elbank-write-data elbank-data)
+  (elbank-report-refresh))
+
+(defun elbank-report-set-custom-label (label &optional transaction)
+  "Set a custom LABEL for TRANSACTION.
+When called interactively, prompt for the label.
+
+If LABEL is an empty string, set nil as the custom label.
+
+If TRANSACTION is nil, set the custom label of the transaction at
+point."
+  (interactive (list (read-from-minibuffer "Custom label: ")))
+  (unless transaction
+    (setq transaction (elbank-report--transaction-at-point)))
+  (setf (elbank-transaction-elt transaction 'custom-label)
+	(if (string-empty-p label)
+	    nil
+	  label))
   (elbank-write-data elbank-data)
   (elbank-report-refresh))
 

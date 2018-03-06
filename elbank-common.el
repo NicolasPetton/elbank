@@ -130,8 +130,14 @@ If the result is nil, return DEFAULT."
   "Return the label of TRANSACTION.
 
 The label is defined as the value at symbol `label' if present,
-the value at symbol `raw' if not. If both are nil, return DEFAULT."
-  (or (map-elt transaction 'label nil)
+the value at symbol `raw' if not.
+
+Transactions can optionally have a `custom-label', which takes
+priority when set.
+
+If all are nil, return DEFAULT."
+  (or (map-elt transaction 'custom-label nil)
+      (map-elt transaction 'label nil)
       (map-elt transaction 'raw default)))
 
 (cl-defmethod elbank-transaction-elt (transaction (key (eql account)) &optional default)
