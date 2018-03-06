@@ -42,7 +42,7 @@
   :type '(file))
 
 (defun elbank-boobank-update (&optional callback)
-  "Update data from boobank.
+  "Update data from boobank and save it on file.
 When CALLBACK is non-nil, evaluate it when data is updated."
   (elbank-boobank--scrap-data
    (lambda (new-data)
