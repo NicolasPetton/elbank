@@ -46,16 +46,16 @@
 When CALLBACK is non-nil, evaluate it when data is updated."
   (elbank-boobank--scrap-data
    (lambda (new-data)
-     (let ((merged-data (elbank--merge-data elbank-data new-data)))
+     (let ((merged-data (elbank-boobank--merge-data elbank-data new-data)))
        (elbank-write-data merged-data)
        (setq elbank-data merged-data)
        (when callback (funcall callback))))))
 
 (defun elbank-boobank--scrap-data (callback)
   "Evaluate CALLBACK with all data scraped from boobank."
-  (elbank--fetch-boobank-accounts
+  (elbank-boobank--fetch-accounts
    (lambda (accounts)
-     (elbank--fetch-boobank-transactions
+     (elbank-boobank--fetch-transactions
       accounts
       (lambda (transactions)
 	(funcall callback `((accounts . ,accounts)
@@ -74,13 +74,13 @@ that account instead of the new ACCOUNT."
     (map-put data 'category nil)
     (cons (cons 'account account-to-use) data)))
 
-(defun elbank--fetch-boobank-accounts (callback)
+(defun elbank-boobank--fetch-accounts (callback)
   "Execute CALLBACK with all fetched accounts from boobank."
-  (let ((command (format "%s -f json ls 2>/dev/null" (elbank--find-boobank-executable))))
+  (let ((command (format "%s -f json ls 2>/dev/null" (elbank--boobank-find-executable))))
     (message "Elbank: fetching accounts...")
     (elbank-boobank--shell-command command callback)))
 
-(defun elbank--fetch-boobank-transactions (accounts callback &optional acc)
+(defun elbank-boobank--fetch-transactions (accounts callback &optional acc)
   "Fetch all transactions from all ACCOUNTS and evaluate CALLBACK.
 CALLBACK is called with all fetched transactions.
 
@@ -91,7 +91,7 @@ ACC is used in recursive calls to accumulate fetched transactions."
 	 (id (map-elt account 'id))
 	 ;; Some backends do not support listing transactions, ignore errors
 	 (command (format "%s -f json history %s %s 2> /dev/null"
-			  (elbank--find-boobank-executable)
+			  (elbank--boobank-find-executable)
 			  id
 			  since)))
     (message "Elbank: fetching transactions for account %s..." id)
@@ -103,7 +103,7 @@ ACC is used in recursive calls to accumulate fetched transactions."
 				     data))
 	      (all (seq-concatenate 'list acc transactions)))
 	 (if (cdr accounts)
-	     (elbank--fetch-boobank-transactions (cdr accounts) callback all)
+	     (elbank-boobank--fetch-transactions (cdr accounts) callback all)
 	   (funcall callback all)))))))
 
 (defun elbank-boobank--shell-command (command callback)
@@ -125,22 +125,22 @@ ACC is used in recursive calls to accumulate fetched transactions."
 				 shell-command-switch
 				 command))))
 
-(defun elbank--merge-data (old new)
+(defun elbank-boobank--merge-data (old new)
   "Merge the dataset from OLD and NEW.
 
 The account list is taken from NEW, so accounts not present in
 NEW are deleted.  New transactions for existing accounts are
 *only* added, no transaction is removed."
   (if old
-      `((accounts . ,(elbank--merge-accounts
+      `((accounts . ,(elbank-boobank--merge-accounts
 		      (map-elt old 'accounts)
 		      (map-elt new 'accounts)))
-	(transactions . ,(elbank--merge-transactions
+	(transactions . ,(elbank-boobank--merge-transactions
 			  (map-elt old 'transactions)
 			  (map-elt new 'transactions))))
     new))
 
-(defun elbank--merge-accounts (old new)
+(defun elbank-boobank--merge-accounts (old new)
   "Merge the account list from OLD and NEW.
 Data from existing accounts in OLD are updated with new data from
 NEW."
@@ -161,18 +161,18 @@ NEW."
 				  new)))
     (seq-concatenate 'list old new-accounts)))
 
-(defun elbank--merge-transactions (old new)
+(defun elbank-boobank--merge-transactions (old new)
   "Merge the transaction list from OLD and NEW."
-  (let ((new-transactions (elbank--new-transactions old new)))
+  (let ((new-transactions (elbank-boobank--new-transactions old new)))
     (seq-concatenate 'list old new-transactions)))
 
-(defun elbank--new-transactions (old new)
+(defun elbank-boobank--new-transactions (old new)
   "Return all transactions not present in OLD bu present in NEW.
 When comparing transactions, ignore (manually set) categories."
   (apply #'seq-concatenate 'list
 	 (seq-map (lambda (trans)
-		    (let ((n (- (elbank--count-transactions-like trans new)
-				(elbank--count-transactions-like trans old))))
+		    (let ((n (- (elbank-boobank--count-transactions-like trans new)
+				(elbank-boobank--count-transactions-like trans old))))
 		      (when (> n 0)
 			(let ((result))
 			  (dotimes (_ n)
@@ -180,7 +180,7 @@ When comparing transactions, ignore (manually set) categories."
 			  result))))
 		  (seq-uniq new))))
 
-(defun elbank--count-transactions-like (transaction transactions)
+(defun elbank-boobank--count-transactions-like (transaction transactions)
   "Return the number of transactions like TRANSACTION in TRANSACTIONS."
   (seq-length (elbank-filter-transactions
 	       transactions
@@ -192,7 +192,7 @@ When comparing transactions, ignore (manually set) categories."
 	       :rdate (map-elt transaction 'rdate)
 	       :label (map-elt transaction 'label))))
 
-(defun elbank--find-boobank-executable ()
+(defun elbank--boobank-find-executable ()
   "Return the boobank executable.
 Signal an error if the boobank executable cannot be found."
   (let ((executable (executable-find elbank-boobank-executable)))
