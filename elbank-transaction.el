@@ -50,7 +50,7 @@
 
 (cl-defgeneric elbank-transaction--field (transaction key)
   "Return the label of the KEY of TRANSACTION."
-  (elbank-transaction-elt transaction key))
+  (map-elt transaction key))
 
 (cl-defmethod elbank-transaction--field (transaction (_key (eql account)))
   (elbank-account-name (elbank-transaction-elt transaction 'account)))
