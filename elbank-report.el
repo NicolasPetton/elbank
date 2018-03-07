@@ -350,7 +350,7 @@ point."
     (setq transaction (elbank-report--transaction-at-point)))
   (setf (elbank-transaction-elt transaction 'category)
 	category)
-  (elbank-write-data elbank-data)
+  (elbank-write-data)
   (elbank-report-refresh))
 
 (defun elbank-report-set-custom-label (label &optional transaction)
@@ -368,7 +368,7 @@ point."
 	(if (string-empty-p label)
 	    nil
 	  label))
-  (elbank-write-data elbank-data)
+  (elbank-write-data)
   (elbank-report-refresh))
 
 (defun elbank-report--split-amount (amount)
