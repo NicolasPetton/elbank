@@ -1,4 +1,4 @@
-image: nicolaspetton/emacs
+image: nicolaspetton/emacs-docker
 
 before_script:
  - cask install
