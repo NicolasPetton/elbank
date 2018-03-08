@@ -223,10 +223,10 @@ If nothing important is at point, return nil."
 	(insert "- ")
 	(let ((beg (point)))
 	  (insert (car report))
-	  (make-button beg (point)
-		       'action
-		       (lambda (&rest _)
-			 (elbank-report--open-saved-report report type)))
+	  (make-text-button beg (point)
+		            'action
+		            (lambda (&rest _)
+			      (elbank-report--open-saved-report report type)))
 	  (put-text-property beg (point) 'imenu-name (car report))
 	  (insert "\n"))))))
 
