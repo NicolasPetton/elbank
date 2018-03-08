@@ -136,8 +136,7 @@ Transactions can optionally have a `custom-label', which takes
 priority when set.
 
 If all are nil, return DEFAULT."
-  (or (map-elt transaction 'custom-label nil)
-      (map-elt transaction 'label nil)
+  (or (map-elt transaction 'label nil)
       (map-elt transaction 'raw default)))
 
 (cl-defmethod elbank-transaction-elt (transaction (key (eql account)) &optional default)

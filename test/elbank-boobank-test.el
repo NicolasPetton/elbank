@@ -90,6 +90,22 @@
 		       merged)
 	      :to-equal '("1" "2" "3" "3" "3" "3"))))
 
+    (it "should ignore custom labels when deduplicating"
+    (let* ((old '(((label . "1"))
+  		  ((label . "2"))
+  		  ((label . "3") (custom-label . "a"))
+		  ((label . "3") (custom-label . "b"))))
+  	   (new '(((label . "2"))
+		  ((label . "3"))
+		  ((label . "3"))
+		  ((label . "3"))
+		  ((label . "3"))))
+	   (elbank-data `((transactions . ,old)))
+  	   (merged (elbank-boobank--merge-transactions new)))
+      (expect (seq-map (lambda (tr) (map-elt tr 'label))
+		       merged)
+	      :to-equal '("1" "2" "3" "3" "3" "3"))))
+
   (it "should ignore categories when deduplicating"
     (let* ((elbank-data `((accounts . (((id . "account1") (label . "account 1"))))
   			  (transactions . (((label . "1"))

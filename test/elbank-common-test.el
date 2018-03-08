@@ -71,10 +71,6 @@
       (let ((tr '((label . "foo") (raw . "bar"))))
         (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))
 
-    (it "prefers custom labels over labels"
-      (let ((tr '((label . "foo") (custom-label . "bar") (raw . "baz"))))
-        (expect (elbank-transaction-elt tr 'label) :to-equal "bar")))
-
     (it "returns raw if present and label is not"
       (let ((tr '((raw . "foo"))))
         (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))

@@ -478,7 +478,11 @@ Signal an error if there is no transaction at point."
   "Return a button text with the label of TRANSACTION.
 When clicking the button, jump to the transaction."
   (with-temp-buffer
-    (insert (elbank-transaction-elt transaction 'label ""))
+    (insert (elbank-transaction-elt transaction
+				    'custom-label
+				    (elbank-transaction-elt transaction
+							    'label
+							    "")))
     (make-text-button (point-at-bol) (point)
 		      'follow-link t
 		      'action
