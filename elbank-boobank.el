@@ -52,7 +52,7 @@ When CALLBACK is non-nil, evaluate it when data is updated."
 	(when callback (funcall callback)))))))
 
 (defun elbank-boobank--update-accounts (callback)
-  "Update the accounts data from boobank and save them on disk.
+  "Update the accounts data from boobank.
 Evaluate CALLBACK when data is updated."
   (elbank-boobank--fetch-then-merge
    #'elbank-boobank--fetch-accounts
@@ -62,7 +62,7 @@ Evaluate CALLBACK when data is updated."
      (funcall callback))))
 
 (defun elbank-boobank--update-transactions (callback)
-  "Update the transactions data from boobank and save them on disk.
+  "Update the transactions data from boobank.
 Evaluate CALLBACK when data is updated."
   (elbank-boobank--fetch-then-merge
    #'elbank-boobank--fetch-transactions
