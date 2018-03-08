@@ -113,54 +113,58 @@ ACC is used in recursive calls to accumulate fetched transactions."
 			account
 			#'eq)
     (error "Account %s not in the Elbank database" account))
-  ;; Some banks add a category to transactions, which conflicts with elbank's
-  ;; categories, so put the category in `bank-category' instead.
-  (map-put data 'bank-category (map-elt data 'category))
-  (map-put data 'category nil)
-  (cons (cons 'account account) data))
+  (let ((transaction (map-copy data)))
+    ;; Some banks add a category to transactions, which conflicts with elbank's
+    ;; categories, so put the category in `bank-category' instead.
+    (map-put transaction 'bank-category (map-elt data 'category))
+    (map-put transaction 'category nil)
+    (map-put transaction 'account account)))
 
 (defun elbank-boobank--merge-accounts (accounts)
   "Merge ACCOUNTS with existing ones in `elbank-data'.
 Data from existing accounts are updated with new data from ACCOUNTS."
+  (elbank-boobank--update-existing-accounts accounts)
   (let ((existing-accounts (map-elt elbank-data 'accounts)))
-    (seq-do (lambda (new-acc)
-	      (when-let ((acc (seq-find (lambda (acc)
-					  (equal (map-elt new-acc 'id)
-						 (map-elt acc 'id)))
-					existing-accounts)))
-		(map-apply (lambda (key val)
-			     (map-put acc key val))
-			   new-acc)))
-	    accounts)
-    (let ((accounts (seq-remove (lambda (acc)
-				  (seq-find (lambda (old-acc)
-					      (string= (map-elt old-acc 'id)
-						       (map-elt acc 'id)))
-					    existing-accounts))
-				accounts)))
-      (seq-concatenate 'list existing-accounts accounts))))
+    (let ((new-accounts (elbank-boobank--find-new-accounts accounts)))
+      (seq-concatenate 'list existing-accounts new-accounts))))
+
+(defun elbank-boobank--find-new-accounts (accounts)
+  "Return accounts in ACCOUNTS that are not present in `elbank-data'."
+  (seq-remove (lambda (acc)
+		(elbank-account-with-id (map-elt acc 'id)))
+	      accounts))
+
+(defun elbank-boobank--update-existing-accounts (new-accounts)
+  "Update existing accounts in `elbank-data' with the data from NEW-ACCOUNTS'.
+No new account is created, only existing account values are updated."
+  (seq-do (lambda (new-acc)
+	    (when-let ((acc (elbank-account-with-id (map-elt new-acc 'id))))
+	      (map-apply (lambda (key val)
+			   (map-put acc key val))
+			 new-acc)))
+	  new-accounts))
 
 (defun elbank-boobank--merge-transactions (transactions)
   "Merge the transaction list from `elbank-data' and TRANSACTIONS."
   (let* ((existing-transactions (map-elt elbank-data 'transactions))
-	 (new-transactions (elbank-boobank--new-transactions
-			    existing-transactions
-			    transactions)))
+	 (new-transactions (elbank-boobank--find-new-transactions transactions)))
     (seq-concatenate 'list existing-transactions new-transactions)))
 
-(defun elbank-boobank--new-transactions (old new)
-  "Return all transactions not present in OLD but present in NEW.
+(defun elbank-boobank--find-new-transactions (transactions)
+  "Return all transactions from TRANSACTIONS not present in `elbank-data'.
 When comparing transactions, ignore (manually set) categories."
   (apply #'seq-concatenate 'list
 	 (seq-map (lambda (trans)
-		    (let ((n (- (elbank-boobank--count-transactions-like trans new)
-				(elbank-boobank--count-transactions-like trans old))))
+		    (let ((n (- (elbank-boobank--count-transactions-like
+				 trans transactions)
+				(elbank-boobank--count-transactions-like
+				 trans (elbank-all-transactions t)))))
 		      (when (> n 0)
 			(let ((result))
 			  (dotimes (_ n)
 			    (setq result (cons trans result)))
 			  result))))
-		  (seq-uniq new))))
+		  (seq-uniq transactions))))
 
 (defun elbank-boobank--count-transactions-like (transaction transactions)
   "Return the number of transactions like TRANSACTION in TRANSACTIONS."
@@ -211,7 +215,7 @@ Evaluate CALLBACK with the result of the merge."
   (funcall fetch-fn
 	   (lambda (data)
 	     (let ((merged (funcall merge-fn data)))
-	       (when callback (funcall callback merged))))))
+	       (funcall callback merged)))))
 
 
 
