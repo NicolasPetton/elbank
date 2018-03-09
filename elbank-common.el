@@ -306,7 +306,7 @@ TRANSACTIONS are expected to all use the same currency."
 (defun elbank-all-transactions (&optional nosplit)
   "Return all transactions for all accounts.
 
-Unless NOSPLIT is non-nil, split transactions that have multiple
+When NOSPLIT is nil, split transactions that have multiple
 categories into multiple transactions."
   (if nosplit
       (map-elt elbank-data 'transactions)
