@@ -328,7 +328,7 @@ categories into multiple transactions."
 		(elbank-all-transactions t))))
 
 (defun elbank--longest-account-label ()
-  "Return the longest account label from all accoutns."
+  "Return the longest account label from all accounts."
   (seq-reduce (lambda (label1 label2)
 		(if (> (seq-length label1)
 		       (seq-length label2))
