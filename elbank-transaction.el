@@ -50,20 +50,24 @@
 
 (cl-defgeneric elbank-transaction--field (transaction key)
   "Return the label of the KEY of TRANSACTION."
-  (elbank-transaction-elt transaction key))
+  (map-elt transaction key))
 
 (cl-defmethod elbank-transaction--field (transaction (_key (eql account)))
   (elbank-account-name (elbank-transaction-elt transaction 'account)))
 
 (defun elbank-transaction--refresh (transaction)
   "Populate the current buffer with the details of TRANSACTION."
-  (let ((inhibit-read-only t)
-	(width (1+ (seq-reduce (lambda (acc elt)
-				 (max acc (seq-length (symbol-name elt))))
-			       elbank-report-available-columns
-			       0))))
+  (let* ((inhibit-read-only t)
+	 (keys (map-keys transaction))
+	 (width (1+ (seq-reduce (lambda (acc elt)
+				  (max acc (seq-length (symbol-name elt))))
+				keys
+				0))))
     (erase-buffer)
-    (seq-doseq (key elbank-report-available-columns)
+    (seq-doseq (key (seq-sort (lambda (k1 k2)
+				(string-lessp (symbol-name k1)
+					      (symbol-name k2)))
+			      keys))
       (let ((label (capitalize (format "%s:" key))))
 	(dotimes (_ (- width (seq-length label)))
 	  (insert " "))
