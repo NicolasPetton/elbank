@@ -65,19 +65,7 @@
   (describe "when asked for label"
     (it "returns label if present"
       (let ((tr '((label . "foo"))))
-        (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))
-
-    (it "prefers label over raw"
-      (let ((tr '((label . "foo") (raw . "bar"))))
-        (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))
-
-    (it "returns raw if present and label is not"
-      (let ((tr '((raw . "foo"))))
-        (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))
-
-    (it "returns default if neither label nor raw are present"
-      (let ((tr '((something-else . "bar"))))
-        (expect (elbank-transaction-elt tr 'label "foo") :to-equal "foo")))))
+        (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))))
 
 (provide 'elbank-common-test)
 ;;; elbank-common-test.el ends here

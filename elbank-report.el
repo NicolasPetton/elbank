@@ -480,6 +480,7 @@ When clicking the button, jump to the transaction."
   (with-temp-buffer
     (insert (or (elbank-transaction-elt transaction 'custom-label)
 		(elbank-transaction-elt transaction 'label)
+		(elbank-transaction-elt transaction 'raw)
 		""))
     (make-text-button (point-at-bol) (point)
 		      'follow-link t
