@@ -123,7 +123,9 @@ Return the report buffer."
   (let* ((label (car budget-entry))
 	 (spent (cadr budget-entry))
 	 (budgeted (cl-caddr budget-entry))
-	 (percentage (round (* 100 (/ spent budgeted)))))
+	 (percentage (if (zerop budgeted)
+			 100
+		       (round (* 100 (/ spent budgeted))))))
     (elbank-budget--insert-line-header label)
     (elbank-insert-progressbar percentage 40)
     (insert (format " %.2f of %.2f budgeted" spent budgeted))
