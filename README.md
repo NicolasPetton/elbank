@@ -187,6 +187,13 @@ Monthly Budgets are specified with `elbank-budget`, an assocation list of the fo
 
 To open a budget report, press `b` from the overview buffer or `M-x elbank-budget-report`.
 
+## Migrating
+
+Elbank's file format has changed over time.
+
+- Version 2.0: If you have Elbank files from the format in Elbank 1.2, you need
+  to run `M-: (elbank-migration-2-0-run) RET`.
+
 ## Contributing
 
 Yes, please do! See [CONTRIBUTING][] for guidelines.
