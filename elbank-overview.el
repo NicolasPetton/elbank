@@ -180,19 +180,19 @@ If nothing important is at point, return nil."
   "Insert ACCOUNT informations in the current buffer."
   (insert "- ")
   (let ((beg (point)))
-    (insert (format "%s" (map-elt account 'label)))
+    (insert (format "%s" (elbank-account-label account)))
     (make-text-button beg (point)
 		      'follow-link t
 		      'action (lambda (&rest _)
 				(elbank-overview--list-transactions account))))
   (let* ((balance (format "%s"
-			  (map-elt account 'balance)))
+			  (elbank-account-balance account)))
 	 (fill-width (+ (- (seq-length (elbank--longest-account-label))
 			   (current-column))
 			(- 25 (seq-length balance)))))
     (dotimes (_ fill-width)
       (insert " "))
-    (elbank--insert-amount balance (map-elt account 'currency))
+    (elbank--insert-amount balance (elbank-account-currency account))
     (put-text-property (point-at-bol) (point-at-eol) 'elbank-account account)
     (put-text-property (point-at-bol) (point-at-eol) 'imenu-name (elbank-account-name account))
     (insert "\n")))
@@ -232,7 +232,7 @@ If nothing important is at point, return nil."
 
 (defun elbank-overview--list-transactions (account)
   "Display the list of transactions for ACCOUNT."
-  (elbank-report :account-id (map-elt account 'id)
+  (elbank-report :account-id (elbank-account-id account)
 		 :reverse-sort t))
 
 (provide 'elbank-overview)

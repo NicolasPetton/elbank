@@ -243,12 +243,12 @@ PERIOD-TYPE is either `month' or `year'."
   (interactive)
   (let* ((accounts (map-elt elbank-data 'accounts))
 	 (labels (seq-map (lambda (account)
-			    (map-elt account 'label))
+			    (elbank-account-label account))
 			  accounts))
 	 (label (completing-read "Select account: " labels)))
     (setq elbank-report-account-id
 	  (when-let ((position (seq-position labels label)))
-	    (map-elt (seq-elt accounts position) 'id))))
+	    (elbank-account-id (seq-elt accounts position)))))
   (elbank-report-refresh))
 
 (defun elbank-report-filter-period ()
@@ -437,9 +437,8 @@ Signal an error if there is no transaction at point."
 		    (insert (format "%s" (cdr filter)))
 		    (insert "\n")))
 		`(("Account:" . ,(and elbank-report-account-id
-				      (map-elt (elbank-account-with-id
-						elbank-report-account-id)
-					       'label)))
+				      (elbank-account-label (elbank-account-with-id
+							     elbank-report-account-id))))
 		  ("Period:" . ,(and elbank-report-period
 				     (elbank-format-period elbank-report-period)))
 		  ("Category:" . ,elbank-report-category))))

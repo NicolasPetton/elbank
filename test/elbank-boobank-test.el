@@ -47,32 +47,32 @@
 	      :to-equal '("1" "2" "3" "4" "5"))))
 
   (it "should keep existing accounts when merging accounts"
-    (let* ((old-accounts '(((id . "1"))
-			   ((id . "2"))))
+    (let* ((old-accounts `(,(elbank-account-create :id "1")
+			   ,(elbank-account-create :id "2")))
 	   (elbank-data `((accounts . ,old-accounts)))
-	   (new-accounts '(((id . "1"))
-			   ((id . "3"))))
-	   (merged (elbank-boobank--merge-accounts new-accounts)))
+	   (new-accounts-data '(((id . "1"))
+				((id . "3"))))
+	   (merged (elbank-boobank--merge-accounts new-accounts-data)))
       (expect (seq-length merged) :to-be 3)
-      (expect (car merged) :to-be (car old-accounts))
-      (expect (cadr merged) :to-be (cadr old-accounts))
-      (expect (cl-caddr merged) :to-be (cadr new-accounts))))
+      (expect (seq-elt merged 0) :to-be (seq-elt old-accounts 0))
+      (expect (seq-elt merged 1) :to-be (seq-elt old-accounts 1))
+      (expect (elbank-account-id (seq-elt merged 2)) :to-equal "3")))
 
   (it "should not duplicate accounts when there are new fields"
-    (let* ((old '(((id . "1") (foo "old"))))
-	   (new '(((id . "1") (foo "old") (bar "new"))))
-	   (elbank-data `((accounts . ,old)))
-	   (merged (elbank-boobank--merge-accounts new)))
+    (let* ((account (elbank-account-create :id "1" :label "account 1"))
+	   (accounts-data '(((id . "1") (label "account 1") (url "https://account1.bank"))))
+	   (elbank-data `((accounts . (,account))))
+	   (merged (elbank-boobank--merge-accounts accounts-data)))
       (expect (seq-length merged) :to-be 1)
-      (expect (car merged) :to-be (car old))))
+      (expect (car merged) :to-be account)))
 
   (it "merging accounts should update current accounts values"
-    (let* ((old '(((id . "1") (balance . "3000"))))
-	   (new '(((id . "1") (balance . "3500"))))
-	   (elbank-data `((accounts . ,old)))
-	   (merged (elbank-boobank--merge-accounts new)))
+    (let* ((account (elbank-account-create :id "1" :balance "2000"))
+	   (accounts-data '(((id . "1") (balance . "3500"))))
+	   (elbank-data `((accounts . (,account))))
+	   (merged (elbank-boobank--merge-accounts accounts-data)))
       (expect (seq-length merged) :to-be 1)
-      (expect (map-elt (car merged) 'balance) :to-equal "3500")))
+      (expect (elbank-account-balance account) :to-equal "3500")))
 
   (it "should deduplicate new transactions"
     (let* ((old '(((label . "1"))
@@ -90,7 +90,7 @@
 		       merged)
 	      :to-equal '("1" "2" "3" "3" "3" "3"))))
 
-    (it "should ignore custom labels when deduplicating"
+  (it "should ignore custom labels when deduplicating"
     (let* ((old '(((label . "1"))
   		  ((label . "2"))
   		  ((label . "3") (custom-label . "a"))
@@ -110,7 +110,7 @@
     (let* ((elbank-data `((accounts . (((id . "account1") (label . "account 1"))))
   			  (transactions . (((label . "1"))
   					   ((label . "2"))
-  					   ((label . "3") (category . "foo"))
+  					   ((label . "3") (category . "label"))
 					   ((label . "3") (category . "bar"))))))
   	   (new-transactions '(((label . "2"))
 			       ((label . "3"))

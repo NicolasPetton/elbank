@@ -88,7 +88,7 @@ ACC is used in recursive calls to accumulate fetched transactions."
 			 ; needed, this can be optimized later on.
 	 (accounts (or accounts (map-elt elbank-data 'accounts)))
 	 (account (car accounts))
-	 (id (map-elt account 'id))
+	 (id (elbank-account-id account))
 	 ;; The backend might not support listing transactions for some
 	 ;; accounts, ignore errors.
 	 (command (format "%s -f json history %s %s 2> /dev/null"
@@ -120,29 +120,49 @@ ACC is used in recursive calls to accumulate fetched transactions."
     (map-put transaction 'category nil)
     (map-put transaction 'account account)))
 
-(defun elbank-boobank--merge-accounts (accounts)
-  "Merge ACCOUNTS with existing ones in `elbank-data'.
-Data from existing accounts are updated with new data from ACCOUNTS."
-  (elbank-boobank--update-existing-accounts accounts)
+(defun elbank-boobank--merge-accounts (accounts-data)
+  "Merge ACCOUNTS-DATA with existing accounts in `elbank-data'.
+Existing accounts are updated with new data from ACCOUNTS-DATA,
+never replaced."
+  (elbank-boobank--update-existing-accounts accounts-data)
   (let ((existing-accounts (map-elt elbank-data 'accounts)))
-    (let ((new-accounts (elbank-boobank--find-new-accounts accounts)))
+    (let ((new-accounts (elbank-boobank--find-new-accounts accounts-data)))
       (seq-concatenate 'list existing-accounts new-accounts))))
 
-(defun elbank-boobank--find-new-accounts (accounts)
-  "Return accounts in ACCOUNTS that are not present in `elbank-data'."
-  (seq-remove (lambda (acc)
-		(elbank-account-with-id (map-elt acc 'id)))
-	      accounts))
+(defun elbank-boobank--find-new-accounts (accounts-data)
+  "Return accounts in ACCOUNTS-DATA that are not present in `elbank-data'."
+  (let ((new-accounts-data (seq-remove (lambda (account-data)
+					 (elbank-account-with-id
+					  (map-elt account-data 'id)))
+				       accounts-data)))
+    (seq-map #'elbank-boobank--create-account
+	     new-accounts-data)))
 
-(defun elbank-boobank--update-existing-accounts (new-accounts)
-  "Update existing accounts in `elbank-data' with the data from NEW-ACCOUNTS'.
+(defun elbank-boobank--create-account (data)
+  "Return an account struct filled with DATA."
+  (let ((account (elbank-account-create :id (map-elt data 'id))))
+    (elbank-boobank--update-account account data)
+    account))
+
+(defun elbank-boobank--update-existing-accounts (accounts-data)
+  "Update existing accounts in `elbank-data' with the data from ACCOUNTS-DATA'.
 No new account is created, only existing account values are updated."
-  (seq-do (lambda (new-acc)
-	    (when-let ((acc (elbank-account-with-id (map-elt new-acc 'id))))
-	      (map-apply (lambda (key val)
-			   (map-put acc key val))
-			 new-acc)))
-	  new-accounts))
+  (seq-do (lambda (account-data)
+	    (when-let ((account (elbank-account-with-id (map-elt account-data 'id))))
+	      (elbank-boobank--update-account
+	       account
+	       account-data)))
+	  accounts-data))
+
+(defun elbank-boobank--update-account (account data)
+  "Update ACCOUNT with new DATA from boobank."
+  (setf (elbank-account-url account) (map-elt data 'url))
+  (setf (elbank-account-label account) (map-elt data 'label))
+  (setf (elbank-account-currency account) (map-elt data 'currency))
+  (setf (elbank-account-iban account) (map-elt data 'iban))
+  (setf (elbank-account-bank-name account) (map-elt data 'bank-name))
+  (setf (elbank-account-type account) (map-elt data 'type))
+  (setf (elbank-account-balance account) (map-elt data 'balance)))
 
 (defun elbank-boobank--merge-transactions (transactions)
   "Merge the transaction list from `elbank-data' and TRANSACTIONS."
