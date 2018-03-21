@@ -53,7 +53,7 @@
   (map-elt transaction key))
 
 (cl-defmethod elbank-transaction--field (transaction (_key (eql account)))
-  (elbank-account-name (elbank-transaction-elt transaction 'account)))
+  (elbank-account-name (map-elt transaction 'account)))
 
 (defun elbank-transaction--refresh (transaction)
   "Populate the current buffer with the details of TRANSACTION."

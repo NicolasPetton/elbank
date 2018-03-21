@@ -348,8 +348,7 @@ point."
 				      (map-keys elbank-categories))))
   (unless transaction
     (setq transaction (elbank-report--transaction-at-point)))
-  (setf (elbank-transaction-elt transaction 'category)
-	category)
+  (setf (map-elt transaction 'category)	category)
   (elbank-write-data)
   (elbank-report-refresh))
 
@@ -364,7 +363,7 @@ point."
   (interactive (list (read-from-minibuffer "Custom label: ")))
   (unless transaction
     (setq transaction (elbank-report--transaction-at-point)))
-  (setf (elbank-transaction-elt transaction 'custom-label)
+  (setf (map-elt transaction 'custom-label)
 	(if (string-empty-p label)
 	    nil
 	  label))
@@ -394,9 +393,9 @@ Splitting is done by assigning multiple categories to
 transaction, each one with an amount."
   (interactive)
   (let* ((trans (or transaction (elbank-report--transaction-at-point)))
-         (amount (elbank-transaction-elt trans 'amount)))
+         (amount (map-elt trans 'amount)))
     (if (elbank-sub-transaction-p trans)
-        (let* ((main-transaction (elbank-transaction-elt trans 'split-from))
+        (let* ((main-transaction (map-elt trans 'split-from))
                (sub-category (map-elt trans 'category))
                (all-categories (map-elt main-transaction 'category))
                (other-categories (cl-remove (cons sub-category amount) all-categories :count 1 :test #'equal))
@@ -412,7 +411,7 @@ Combining the parent is done by setting its category to nil."
   (let ((trans (elbank-report--transaction-at-point)))
     (unless (elbank-sub-transaction-p trans)
       (user-error "Cannot combine transaction"))
-    (elbank-report-set-category nil (elbank-transaction-elt trans 'split-from))))
+    (elbank-report-set-category nil (map-elt trans 'split-from))))
 
 (defun elbank-report--transaction-at-point ()
   "Return the transaction at point.
@@ -470,16 +469,16 @@ Signal an error if there is no transaction at point."
 
 (cl-defgeneric elbank-report--cell (transaction column)
   "Return the text for the cell for TRANSACTION at COLUMN."
-  (let ((str (elbank-transaction-elt transaction column "")))
+  (let ((str (map-elt transaction column "")))
     (elbank-report--truncate str)))
 
 (cl-defmethod elbank-report--cell (transaction (_column (eql label)))
   "Return a button text with the label of TRANSACTION.
 When clicking the button, jump to the transaction."
   (with-temp-buffer
-    (insert (or (elbank-transaction-elt transaction 'custom-label)
-		(elbank-transaction-elt transaction 'label)
-		(elbank-transaction-elt transaction 'raw)
+    (insert (or (map-elt transaction 'custom-label)
+		(map-elt transaction 'label)
+		(map-elt transaction 'raw)
 		""))
     (make-text-button (point-at-bol) (point)
 		      'follow-link t
@@ -488,9 +487,18 @@ When clicking the button, jump to the transaction."
 			(elbank-show-transaction transaction)))
     (elbank-report--truncate (buffer-string))))
 
-(cl-defmethod elbank-report--cell (transaction (_column (eql account)))
-  "Return the label of the account associated with TRANSACTION."
-  (elbank-report--truncate (elbank-account-name (elbank-transaction-elt transaction 'account))))
+(cl-defmethod elbank-report--cell (transaction (column (eql account)))
+  "Return the label of the account associated with TRANSACTION.
+
+If TRANSACTION is a split transaction, return the account of its
+parent transaction."
+  (if (elbank-sub-transaction-p transaction)
+      (cl-call-next-method (map-elt transaction 'split-from) column)
+   (elbank-report--truncate (elbank-account-name (map-elt transaction 'account)))))
+
+(cl-defmethod elbank-report--cell (transaction (_column (eql category)))
+  "Return the computed category associated with TRANSACTION."
+  (elbank-report--truncate (elbank-transaction-computed-category transaction)))
 
 (defun elbank-report--truncate (str)
   "Truncate STR to `elbank-report-max-column-width'.
@@ -530,7 +538,7 @@ The grouping property is defined by `elbank-report-group-by'."
 	    (elbank-report--insert-sum (cdr group)))
 	  (elbank-report--sort-groups
 	   (seq-group-by (lambda (trans)
-			   (elbank-transaction-elt trans elbank-report-group-by ""))
+			   (elbank-report--cell trans elbank-report-group-by))
 			 transactions))))
 
 (defun elbank-report--insert-sum (transactions)
@@ -593,7 +601,7 @@ non-nil, or by the first column if nil."
 			 (car elbank-report-columns))))
     (elbank-report--sort transactions
 			 (lambda (trans)
-			   (elbank-transaction-elt trans sort-column ""))
+			   (elbank-report--cell trans sort-column))
 			 (seq-contains elbank-report-amount-columns sort-column))))
 
 (defun elbank-report--sort-groups (groups)

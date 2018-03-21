@@ -133,22 +133,12 @@ Data is cached to `elbank-data'."
      (newline)
      (insert (format "(setq %s '%S)" "elbank-data" elbank-data)))))
 
-(cl-defgeneric elbank-transaction-elt (transaction key &optional default)
-  "Return the value of TRANSACTION at KEY.
+(defun elbank-transaction-computed-category (transaction &optional default)
+  "Compute and return the category of TRANSACTION.
 
-If the result is nil, return DEFAULT."
-  (map-elt transaction key default))
-
-(cl-defmethod elbank-transaction-elt (transaction (key (eql account)) &optional default)
-  "Return the account of TRANSACTION.
-
-If TRANSACTION is a split transaction, return the account of its parent transaction."
-  (if (elbank-sub-transaction-p transaction)
-      (elbank-transaction-elt (elbank-transaction-elt transaction 'split-from) 'account)
-    (cl-call-next-method transaction key default)))
-
-(cl-defmethod elbank-transaction-elt (transaction (_key (eql category)) &optional default)
-  "Return the category of TRANSACTION.
+If TRANSACTION has a category set, return it, otherwise compute
+it from the list `elbank-categories', matching the TRANSACTION
+`raw' value.
 
 Split transactions (that hold an list of (CATEGORY . AMOUNT)
 elements as category) have no category.
@@ -174,12 +164,6 @@ If the result is nil, return DEFAULT."
 	  ((stringp custom-category) custom-category)
 	  (t default))))
 
-(cl-defgeneric (setf elbank-transaction-elt) (store transaction key)
-  (if (map-contains-key transaction key)
-      (setf (map-elt transaction key) store)
-    ;; Always mutate transactions in place.
-    (nconc transaction (list (cons key store)))))
-
 (defun elbank-transaction-split-p (transaction)
   "Return non-nil if TRANSACTION is split.
 Split transactions have an alist of (CATEGORY-NAME . AMOUNT) as
@@ -193,13 +177,13 @@ category."
 
 Sub transactions are built dynamically from
 `elbank-all-transactions' from split transactions."
-  (not (null (elbank-transaction-elt transaction 'split-from))))
+  (not (null (map-elt transaction 'split-from))))
 
 (defmacro elbank-filter-transactions (collection &rest query)
     "Returned all transactions in COLLECTION that match QUERY.
 
 QUERY is a plist of the form (:KEY1 VAL1 :KEY2 VAL2...) where
-keys are keywords matching transaction keys.
+keys are keywords matching transaction properties.
 
 Special keys in QUERY:
 
@@ -228,8 +212,8 @@ Special keys in QUERY:
   (unless (keywordp key)
     (error "Query KEY must be a keyword"))
   `(or (null ,val)
-       (equal (elbank-transaction-elt ,transaction
-				      ',(intern (seq-drop (symbol-name key) 1)))
+       (equal (map-elt ,transaction
+		       ',(intern (seq-drop (symbol-name key) 1)))
 	      ,val)))
 
 (cl-defmethod elbank--make-query (transaction (_key (eql :category)) val)
@@ -266,19 +250,19 @@ Comparison is done by formatting times using FORMAT."
   (apply #'encode-time
 	 (seq-map (lambda (el)
 		    (or el 0))
-		  (parse-time-string (elbank-transaction-elt transaction 'date)))))
+		  (parse-time-string (map-elt transaction 'date)))))
 
 (defun elbank-transaction-in-category-p (transaction category)
   "Return non-nil if TRANSACTION belongs to CATEGORY."
   (or (null category)
-      (string-prefix-p category (elbank-transaction-elt transaction 'category "") t)))
+      (string-prefix-p category (elbank-transaction-computed-category transaction "") t)))
 
 (defun elbank-sum-transactions (transactions)
   "Return the sum of all TRANSACTIONS.
 TRANSACTIONS are expected to all use the same currency."
   (seq-reduce (lambda (acc transaction)
 		(+ acc
-		   (string-to-number (elbank-transaction-elt transaction 'amount))))
+		   (string-to-number (map-elt transaction 'amount))))
 	      transactions
 	      0))
 
@@ -318,9 +302,8 @@ categories into multiple transactions."
 				     (map-put sub-trans 'category (car cat))
 				     (map-put sub-trans 'label
 					      (format "[split] %s"
-						      (elbank-transaction-elt
-						       transaction
-						       'label)))
+						      (map-elt transaction
+							       'label)))
 				     (map-put sub-trans 'split-from transaction)
 				     sub-trans))
 				 (map-elt transaction 'category))

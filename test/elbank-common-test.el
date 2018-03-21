@@ -32,27 +32,12 @@
   (it "should access transactions element"
     (let ((tr '((amount . "2000")
 		(category . "Expenses"))))
-      (expect (elbank-transaction-elt tr 'amount) :to-equal "2000")
-      (expect (elbank-transaction-elt tr 'category) :to-equal "Expenses")))
-
-  (it "should set transactions element"
-    (let ((tr '((amount . "2000")
-		(category . "Expenses"))))
-      (setf (elbank-transaction-elt tr 'amount) "-1500")
-      (setf (elbank-transaction-elt tr 'category) "Income")
-      (expect (elbank-transaction-elt tr 'amount) :to-equal "-1500")
-      (expect (elbank-transaction-elt tr 'category) :to-equal "Income")))
-
-  (it "should mutate transactions in place when adding new keys"
-    (let* ((original '((amount . "2000")))
-	   (tr original))
-      (setf (elbank-transaction-elt tr 'category) "Income")
-      (expect (elbank-transaction-elt tr 'category) :to-equal "Income")
-      (expect original :to-be tr)))
+      (expect (map-elt tr 'amount) :to-equal "2000")
+      (expect (map-elt tr 'category) :to-equal "Expenses")))
 
   (it "split transactions should have no category"
     (let ((tr '((category . (("foo" . 20) ("bar" . 10))))))
-      (expect (elbank-transaction-elt tr 'category) :to-be nil)
+      (expect (elbank-transaction-computed-category tr) :to-be nil)
       (expect (elbank-transaction-in-category-p tr "foo") :to-be nil)
       (expect (elbank-transaction-in-category-p tr "bar") :to-be nil)))
 
@@ -60,12 +45,7 @@
     (let ((tr1 '((category . (("foo" . 20) ("bar" . 10)))))
 	  (tr2 '((category . "foo"))))
       (expect (elbank-transaction-split-p tr1) :to-be-truthy)
-      (expect (elbank-transaction-split-p tr2) :to-be nil)))
-
-  (describe "when asked for label"
-    (it "returns label if present"
-      (let ((tr '((label . "foo"))))
-        (expect (elbank-transaction-elt tr 'label) :to-equal "foo")))))
+      (expect (elbank-transaction-split-p tr2) :to-be nil))))
 
 (provide 'elbank-common-test)
 ;;; elbank-common-test.el ends here
