@@ -47,6 +47,7 @@
 (require 'elbank-report)
 (require 'elbank-budget)
 (require 'elbank-boobank)
+(require 'elbank-migration)
 
 (provide 'elbank)
 ;;; elbank.el ends here
