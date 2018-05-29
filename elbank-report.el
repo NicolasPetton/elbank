@@ -493,7 +493,7 @@ When clicking the button, jump to the transaction."
 If TRANSACTION is a split transaction, return the account of its
 parent transaction."
   (if (elbank-sub-transaction-p transaction)
-      (cl-call-next-method (map-elt transaction 'split-from) column)
+      (elbank-report--cell (map-elt transaction 'split-from) column)
    (elbank-report--truncate (elbank-account-name (map-elt transaction 'account)))))
 
 (cl-defmethod elbank-report--cell (transaction (_column (eql category)))
