@@ -4,6 +4,8 @@
 
 ## Summary
 
+**I'm not actively maintaining this project anymore**.
+
 Elbank is a personal finances reporting tool for Emacs.  It uses
 [Weboob](https://weboob.org) for scraping data from bank websites.
 
